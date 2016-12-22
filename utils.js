@@ -26,8 +26,12 @@ const takeUntilNotNull =
       ? null
       : (f(x) || takeUntilNotNull(f, xs));
 
+const trim =
+  str => str.trim();
+
 module.exports = {
   compose,
   readFile,
-  takeUntilNotNull
+  takeUntilNotNull,
+  trim
 };
