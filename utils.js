@@ -29,7 +29,11 @@ const takeUntilNotNull =
 const trim =
   str => str.trim();
 
+const chain =
+  fn => p => p.then(fn);
+
 module.exports = {
+  chain,
   compose,
   readFile,
   takeUntilNotNull,
