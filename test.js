@@ -53,3 +53,12 @@ test('compose', t => {
     t.end();
   });
 });
+
+test('flatten', t => {
+  const { flatten } = require('./utils');
+
+  t.test('flat as the earth', t => {
+    t.deepEqual(flatten([[1], [2], [3], [4]]), [1, 2, 3, 4]);
+    t.end();
+  });
+});

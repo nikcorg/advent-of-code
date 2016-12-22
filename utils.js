@@ -40,6 +40,10 @@ const split =
   x =>
     s => s.split(x);
 
+const match =
+  x =>
+    s => s.match(x);
+
 const join =
   g =>
     s => s.join(g);
@@ -67,17 +71,34 @@ const constrain =
   (min, max) =>
     n => Math.min(max, Math.max(n, min));
 
+const empty =
+  x => x.length < 1;
+
+const sort =
+  f =>
+    xs => xs.slice(0).sort(f); // slice, to avoid mutation
+
+const numSort = sort((a, b) => a - b);
+
+const flatten =
+  xs => xs.reduce((f, x) => f.concat(Array.isArray(x) ? x : [x]), []);
+
 module.exports = {
   chain,
   compose,
   constrain,
+  empty,
   equals,
+  flatten,
   join,
   lookup,
+  match,
   map,
+  numSort,
   not,
   readFile,
   reduce,
+  sort,
   split,
   takeUntilNotNull,
   tap,
