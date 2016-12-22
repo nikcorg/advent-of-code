@@ -71,9 +71,10 @@ test('day 4', t => {
 
   t.test('test case 5', t => {
     const input = ['qzmt-zixmtkozy-ivhz', 343];
-    const outcome = 'very encrypted name';
+    const outcome = { id: 343, name: 'very encrypted name' };
 
-    t.equal(decrypt(input), outcome);
+    t.deepEqual(decrypt(input), outcome);
     t.end();
   });
 });
+

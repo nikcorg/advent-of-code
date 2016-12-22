@@ -1,4 +1,3 @@
-// dirty, dirty code. too many puzzles for one day.
 const {
   compose,
   equals,
@@ -15,6 +14,7 @@ const {
 } = require('../../utils');
 
 const RE_ROOM_ID = /([a-z\-]+)-([0-9]+)\[([a-z]+)\]/;
+const RE_ALPHA = /[a-z]/;
 
 const splitId = compose(ifNotNull(slice(1)), match(RE_ROOM_ID))
 
@@ -58,39 +58,43 @@ const get =
 const add =
   (a, b) => a + b;
 
-const rotate = n =>
-  compose(
-    cc => Number.isInteger(cc) ? String.fromCharCode(cc) : cc,
+const rotate =
+  n =>
     c => {
-      if (c === ' ') {
-        return c;
-      }
-      const cc = c.charCodeAt(0) - 97 + (n % 26);
+      if (!RE_ALPHA.test(c)) return c;
+
+      let cc = c.charCodeAt(0) - 97 + (n % 26);
+
       if (cc > 25) {
-        return cc - 26 + 97;
+        cc -= 26;
       }
-      return cc + 97;
-    });
+
+      return String.fromCharCode(cc + 97);
+    };
 
 const decrypt =
   ([name, id]) =>
-    ({ id,
+    ({
+      id,
       name: name
         .replace(/-/g, ' ')
         .split('')
         .map(rotate(id))
         .join('') });
 
+const parseInput = compose(
+  filter(isValid),
+  parseIds);
+
 const first = compose(
   reduce(add, 0),
   map(get(1)),
-  filter(isValid),
-  parseIds);
+  parseInput);
 
 const second = compose(
   filter(({ name }) => /northpole/.test(name)),
   map(decrypt),
-  filter(isValid),
-  parseIds);
+  parseInput);
 
 module.exports = { decrypt, first, second, isValid, parseIds, letterFreq, checksum };
+
