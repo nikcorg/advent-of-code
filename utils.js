@@ -11,8 +11,6 @@ const compose =
       );
   };
 
-module.exports.compose = compose;
-
 const readFile =
   file =>
     new Promise((res, rej) =>
@@ -22,12 +20,14 @@ const readFile =
             ? rej(err)
             : res(String(data)))));
 
-module.exports.readFile = readFile;
-
 const takeUntilNotNull =
   (f, [x, ...xs]) =>
     x == null
       ? null
       : (f(x) || takeUntilNotNull(f, xs));
 
-module.exports.takeUntilNotNull = takeUntilNotNull;
+module.exports = {
+  compose,
+  readFile,
+  takeUntilNotNull
+};
