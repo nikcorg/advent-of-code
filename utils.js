@@ -83,13 +83,31 @@ const numSort = sort((a, b) => a - b);
 const flatten =
   xs => xs.reduce((f, x) => f.concat(Array.isArray(x) ? x : [x]), []);
 
+const ifNotNull =
+  f =>
+    x => x == null ? x : f(x);
+
+const filter =
+  f =>
+    xs => xs.filter(f);
+
+const slice =
+  (a, b) =>
+    xs => xs.slice(a, b);
+
+const replace =
+  (s, r) =>
+    x => x.replace(s, r);
+
 module.exports = {
   chain,
   compose,
   constrain,
   empty,
   equals,
+  filter,
   flatten,
+  ifNotNull,
   join,
   lookup,
   match,
@@ -98,6 +116,8 @@ module.exports = {
   not,
   readFile,
   reduce,
+  replace,
+  slice,
   sort,
   split,
   takeUntilNotNull,
