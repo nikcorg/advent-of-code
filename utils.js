@@ -32,10 +32,15 @@ const trim =
 const chain =
   fn => p => p.then(fn);
 
+const tap =
+  m =>
+    x => console.log(m) || console.dir(x, { depth: null }) || x;
+
 module.exports = {
   chain,
   compose,
   readFile,
   takeUntilNotNull,
+  tap,
   trim
 };
