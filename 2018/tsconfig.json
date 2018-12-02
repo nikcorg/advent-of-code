@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "checkJs": false,
+    "module": "commonjs",
+    "noErrorTruncation": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "dist",
+    "pretty": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2018",
+    "types": [
+      "node"
+    ]
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}
