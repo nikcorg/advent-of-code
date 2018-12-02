@@ -1,6 +1,10 @@
-const { compose, chain, head, readFile, trim } = require('../../utils');
+const { compose, chain, head, readFile, split, trim } = require('../../utils');
 const { first, second } = require('./solve');
 
-const prog = compose(chain(compose(first, trim, head)), readFile);
+const parseInput = compose(trim, head, split('\n'));
+const solve = i => [first(i), second(i)];
+const prog = compose(chain(solve), chain(parseInput), readFile);
 
-prog('./input.txt').then(r => console.log('1: %s\n', r));
+prog('./input.txt')
+  .then(([first, second]) =>
+    console.log('1: %s\n2: %s\n', first, second));

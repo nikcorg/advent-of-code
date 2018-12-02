@@ -99,6 +99,20 @@ const replace =
   (s, r) =>
     x => x.replace(s, r);
 
+const head =
+  ([x]) => x;
+
+const zip =
+  (a, b) => {
+    const zipped = [];
+
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      zipped.push([a[i], b[i]]);
+    }
+
+    return zipped;
+  };
+
 module.exports = {
   chain,
   compose,
@@ -107,6 +121,7 @@ module.exports = {
   equals,
   filter,
   flatten,
+  head,
   ifNotNull,
   join,
   lookup,
@@ -122,5 +137,6 @@ module.exports = {
   split,
   takeUntilNotNull,
   tap,
-  trim
+  trim,
+  zip
 };

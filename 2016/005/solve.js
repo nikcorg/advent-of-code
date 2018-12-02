@@ -3,28 +3,40 @@
 
 const crypto = require('crypto');
 
-const first = i => {
-  const passcode = [];
+function* makeHashIterator(stem) {
   let suffix = 0;
 
-  while (passcode.length < 8) {
+  while (true) {
     const hash = crypto.createHash('md5');
-    hash.update(`${i}${suffix}`);
+    hash.update(`${stem}${suffix}`);
     const digest = hash.digest('hex');
 
     if (digest.substr(0, 5) === '00000') {
-      passcode.push(digest.substr(5, 1));
+      yield digest;
     }
 
     suffix++;
+  }
+}
+
+const first = i => {
+  const passcode = [];
+  const iter = makeHashIterator(i);
+
+  while (passcode.length < 8) {
+    passcode.push(iter.next().value.substr(5, 1));
   }
 
   return passcode.join('');
 };
 
 const second = () => null;
+// 1. take zip(index, hash) until 8
+// 2. sort by index
+// 3. map over snd
 
 module.exports = {
   first,
-  second
+  second,
+  makeHashIterator
 };
