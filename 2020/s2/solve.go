@@ -12,6 +12,8 @@ import (
 	"github.com/nikcorg/aoc2020/utils/linestream"
 )
 
+const bufSize = 1
+
 type Solver struct {
 	Ctx context.Context
 	Inp string
@@ -31,25 +33,28 @@ func (s *Solver) Solve(part int) error {
 	}
 	defer func() { inputFile.Close() }()
 
-	lineInput := make(chan *linestream.Line, 0)
+	lineInput := make(chan *linestream.Line, bufSize)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	filteredInput := make(chan *linestream.Line, 0)
+	filteredInput := make(chan *linestream.Line, bufSize)
 	linestream.SkipEmpty(lineInput, filteredInput)
 
-	solution := <-solveStream(getSolver(part), convStream(filteredInput))
+	passwords := make(chan *passwordCandidate)
+	convStream(filteredInput, passwords)
+
+	solution := solve(getValidator(part), passwords)
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
 
-func getSolver(part int) solver {
+func getValidator(part int) validator {
 	switch part {
 	case 1:
-		return solveFirst
+		return validateFirst
 	case 2:
-		return solveSecond
+		return validateSecond
 	}
 	panic(fmt.Errorf("invalid part: %d", part))
 }
@@ -70,14 +75,14 @@ func splitResult(xs []int) ([]int, int) {
 	return rest, solution
 }
 
-func solveFirst(pc passwordCandidate) bool {
+func validateFirst(pc *passwordCandidate) bool {
 	replacer := regexp.MustCompile(fmt.Sprintf(`[^%s]`, pc.seek))
 	filtered := replacer.ReplaceAllString(pc.match, "")
 	matches := len(filtered)
 	return pc.min <= matches && matches <= pc.max
 }
 
-func solveSecond(pc passwordCandidate) bool {
+func validateSecond(pc *passwordCandidate) bool {
 	leftMatch := string(pc.match[pc.min-1]) == pc.seek
 	rightMatch := string(pc.match[pc.max-1]) == pc.seek
 	return (leftMatch || rightMatch) && !(rightMatch && leftMatch)
@@ -90,32 +95,18 @@ type passwordCandidate struct {
 	match string
 }
 
-type solver func(passwordCandidate) bool
+type validator func(*passwordCandidate) bool
 
-func solveStream(solve solver, in chan passwordCandidate) chan int {
-	out := make(chan int, 1)
+func solve(valid validator, in chan *passwordCandidate) int {
 	validTotal := 0
 
-	go func() {
-		defer func() {
-			out <- validTotal
-			close(out)
-		}()
-
-		for {
-			select {
-			case v, ok := <-in:
-				if !ok {
-					return
-				}
-				if solve(v) {
-					validTotal++
-				}
-			}
+	for pc := range in {
+		if valid(pc) {
+			validTotal++
 		}
-	}()
+	}
 
-	return out
+	return validTotal
 }
 
 func mustConv(in string) int {
@@ -128,9 +119,7 @@ func mustConv(in string) int {
 	return v
 }
 
-func convStream(in linestream.LineChan) chan passwordCandidate {
-	out := make(chan passwordCandidate)
-
+func convStream(in linestream.LineChan, out chan *passwordCandidate) {
 	splitter := regexp.MustCompile(`^(\d+)-(\d+) (.): (.*)$`)
 
 	go func() {
@@ -144,7 +133,7 @@ func convStream(in linestream.LineChan) chan passwordCandidate {
 				}
 				if v != nil {
 					matches := splitter.FindStringSubmatch(v.Content())
-					out <- passwordCandidate{
+					out <- &passwordCandidate{
 						min:   mustConv(matches[1]),
 						max:   mustConv(matches[2]),
 						seek:  matches[3],
@@ -154,6 +143,4 @@ func convStream(in linestream.LineChan) chan passwordCandidate {
 			}
 		}
 	}()
-
-	return out
 }
