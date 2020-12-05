@@ -76,7 +76,6 @@ func parsePuzzleArg(candidate string) (int, int, error) {
 	parts := strings.Split(candidate, ".")
 	if len(parts) != 2 {
 		return 0, 0, fmt.Errorf("expected puzzle to be n.1 or n.2, got: %s", candidate)
-
 	}
 
 	var (
