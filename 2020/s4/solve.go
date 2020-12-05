@@ -13,6 +13,8 @@ import (
 	"github.com/nikcorg/aoc2020/utils/linestream"
 )
 
+const bufSize = 1
+
 type Solver struct {
 	Ctx context.Context
 	Inp string
@@ -32,76 +34,79 @@ func (s *Solver) Solve(part int) error {
 	}
 	defer func() { inputFile.Close() }()
 
-	lineInput := make(linestream.LineChan, 0)
+	lineInput := make(linestream.LineChan, bufSize)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	solution := <-solveStream(getSolver(part), convStream(lineInput))
+	passports := make(chan *passport, bufSize)
+	convStream(lineInput, passports)
+
+	solution := <-solveStream(getValidator(part), passports)
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
 
-type solver func(*passport, int) int
+type validator func(*passport) bool
 
-func getSolver(part int) solver {
+func getValidator(part int) validator {
 	switch part {
 	case 1:
-		return solveFirst
+		return validateLax
 	case 2:
-		return solveSecond
+		return validateStrict
 	}
 
 	panic(fmt.Errorf("invalid part: %d", part))
 }
 
-func solveSecond(p *passport, validPassports int) int {
+func validateStrict(p *passport) bool {
 	mandatory := []string{"byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"}
 
 	for _, f := range mandatory {
 		fv, isset := p.fields[f]
 		if !isset {
-			return validPassports
+			return false
 		}
 
 		switch f {
 		case "byr":
 			if !validNumber(1920, 2002, fv) {
-				return validPassports
+				return false
 			}
 
 		case "iyr":
 			if !validNumber(2010, 2020, fv) {
-				return validPassports
+				return false
 			}
 
 		case "eyr":
 			if !validNumber(2020, 2030, fv) {
-				return validPassports
+				return false
 			}
 
 		case "hgt":
 			if !validHeight(fv) {
-				return validPassports
+				return false
 			}
 
 		case "hcl":
 			if !hexColourMatcher.MatchString(fv) {
-				return validPassports
+				return false
 			}
 
 		case "ecl":
 			if !eyeColourMatcher.MatchString(fv) {
-				return validPassports
+				return false
 			}
 
 		case "pid":
 			if !pidMatcher.MatchString(fv) {
-				return validPassports
+				return false
 			}
 		}
 	}
-	return validPassports + 1
+	return true
 }
 
 var hexColourMatcher = regexp.MustCompile(`^#[\da-f]{6}$`)
@@ -140,37 +145,42 @@ func validNumber(min, max int, year string) bool {
 	return true
 }
 
-func solveFirst(p *passport, validPassports int) int {
+func validateLax(p *passport) bool {
 	mandatory := []string{"byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"}
 
 	for _, f := range mandatory {
 		if _, isset := p.fields[f]; !isset {
-			return validPassports
+			return false
 		}
 	}
-	return validPassports + 1
+
+	return true
 }
 
-func solveStream(solve solver, inp chan *passport) chan int {
+func solveStream(valid validator, inp chan *passport) chan int {
 	out := make(chan int)
 
-	result := 0
+	valids := make(chan bool, 1)
+	totalValid := 0
 
 	go func() {
 		defer close(out)
 
-		for {
-			select {
-			case p, ok := <-inp:
-				if !ok {
-					out <- result
-					return
-				}
-
-				result = solve(p, result)
+		for isValid := range valids {
+			if isValid {
+				totalValid++
 			}
 		}
 
+		out <- totalValid
+	}()
+
+	go func() {
+		defer close(valids)
+
+		for p := range inp {
+			valids <- valid(p)
+		}
 	}()
 
 	return out
@@ -204,40 +214,24 @@ func (p *passport) SetFields(fs []kv) {
 	}
 }
 
-func convStream(inp chan *linestream.Line) chan *passport {
-	out := make(chan *passport)
-
+func convStream(inp linestream.LineChan, out chan *passport) {
 	go func() {
 		defer close(out)
 
 		var p *passport = newPassport()
 
-		shouldSend := false
-
-		for {
-			select {
-			case v, ok := <-inp:
-				if !ok {
-					if shouldSend {
-						out <- p
-					}
-					return
-				}
-
-				if v.Content() == "" {
-					out <- p
-					p = newPassport()
-					shouldSend = false
-					continue
-				}
-
-				p.SetFields(splitValues(v.Content()))
-				shouldSend = true
+		for v := range inp {
+			// passports are delimited by empty lines
+			if v.Content() == "" {
+				out <- p
+				p = newPassport()
+				continue
 			}
+			p.SetFields(splitValues(v.Content()))
 		}
-	}()
 
-	return out
+		out <- p
+	}()
 }
 
 type kv struct {
