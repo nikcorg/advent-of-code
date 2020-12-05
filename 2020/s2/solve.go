@@ -31,7 +31,13 @@ func (s *Solver) Solve(part int) error {
 	}
 	defer func() { inputFile.Close() }()
 
-	solution := <-solveStream(getSolver(part), convStream(linestream.SkipEmpty(linestream.WithDoneSignalling(cancel, linestream.New(ctx, bufio.NewReader(inputFile))))))
+	lineInput := make(chan *linestream.Line, 0)
+	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
+
+	filteredInput := make(chan *linestream.Line, 0)
+	linestream.SkipEmpty(lineInput, filteredInput)
+
+	solution := <-solveStream(getSolver(part), convStream(filteredInput))
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
 

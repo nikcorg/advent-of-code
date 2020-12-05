@@ -30,8 +30,7 @@ func (l Line) Content() string {
 type LineChan = chan *Line
 
 // New creates a new LineStream reader
-func New(ctx context.Context, reader *bufio.Reader) LineChan {
-	out := make(chan *Line)
+func New(ctx context.Context, reader *bufio.Reader, out LineChan) {
 	linesRead := 0
 
 	go func() {
@@ -60,32 +59,6 @@ func New(ctx context.Context, reader *bufio.Reader) LineChan {
 			}
 		}
 	}()
-
-	return out
-}
-
-func SkipEmpty(in LineChan) LineChan {
-	out := make(chan *Line)
-
-	go func() {
-		defer close(out)
-
-		for {
-			select {
-			case v, ok := <-in:
-				if !ok {
-					return
-				}
-				if v == nil || v.Content() == "" {
-					continue
-				}
-
-				out <- v
-			}
-		}
-	}()
-
-	return out
 }
 
 func WithDoneSignalling(done context.CancelFunc, in LineChan) LineChan {

@@ -31,8 +31,13 @@ func (s *Solver) Solve(part int) error {
 	}
 	defer func() { inputFile.Close() }()
 
-	solution := <-getSolver(part)(
-		linestream.SkipEmpty(linestream.New(ctx, bufio.NewReader(inputFile))))
+	lineInput := make(linestream.LineChan, 10)
+	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
+
+	filteredInput := make(linestream.LineChan, 10)
+	linestream.SkipEmpty(lineInput, filteredInput)
+
+	solution := <-getSolver(part)(filteredInput)
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
 
@@ -57,7 +62,7 @@ func solveFirst(inp linestream.LineChan) <-chan int {
 	out := make(chan int, 0)
 
 	maxID := 0
-	candidateIDs := make(chan int)
+	candidateIDs := make(chan int, 10)
 
 	go func() {
 		defer close(out)
@@ -102,7 +107,7 @@ func insert(ns []int, n int) []int {
 func solveSecond(inp linestream.LineChan) <-chan int {
 	out := make(chan int)
 
-	candidateIDs := make(chan int, 5) // buffered, so that it won't block the cipher calc
+	candidateIDs := make(chan int, 10) // buffered, so that it won't block the cipher calc
 	allIDs := []int{}
 
 	// accumulate a sorted list of IDs and finally scan for gap in sequence

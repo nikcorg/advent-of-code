@@ -33,7 +33,9 @@ func (s *Solver) Solve(part int) error {
 	}
 	defer func() { inputFile.Close() }()
 
-	multiplicands, product := splitResult(<-solveStream(getSolver(part), convStream(linestream.New(ctx, bufio.NewReader(inputFile)))))
+	input := make(chan *linestream.Line, 0)
+	linestream.New(ctx, bufio.NewReader(inputFile), input)
+	multiplicands, product := splitResult(<-solveStream(getSolver(part), convStream(input)))
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %s=%d\n", strings.Join(stringify(multiplicands), "*"), product))
 
