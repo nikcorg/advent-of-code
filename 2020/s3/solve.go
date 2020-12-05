@@ -147,7 +147,7 @@ func solveStream(in <-chan int) <-chan int {
 	return out
 }
 
-func solveSlope(slopeHoriz, slopeVert int, in linestream.LineChan) <-chan int {
+func solveSlope(slopeHoriz, slopeVert int, in linestream.ReadOnlyLineChan) <-chan int {
 	out := make(chan int)
 
 	collisions := 0

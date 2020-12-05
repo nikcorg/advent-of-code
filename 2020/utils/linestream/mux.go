@@ -1,11 +1,11 @@
 package linestream
 
 type Muxxer struct {
-	source LineChan
-	chans  []LineChan
+	source ReadOnlyLineChan
+	chans  []WriteOnlyLineChan
 }
 
-func NewMuxxer(source LineChan) *Muxxer {
+func NewMuxxer(source ReadOnlyLineChan) *Muxxer {
 	r := &Muxxer{source: source}
 
 	go r.listen()
@@ -39,7 +39,7 @@ func (m *Muxxer) bcast(v *Line) {
 	}
 }
 
-func (m *Muxxer) Recv() LineChan {
+func (m *Muxxer) Recv() ReadOnlyLineChan {
 	out := make(LineChan)
 	m.chans = append(m.chans, out)
 	return out

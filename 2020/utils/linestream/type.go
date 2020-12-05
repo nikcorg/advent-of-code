@@ -28,9 +28,11 @@ func (l Line) Content() string {
 }
 
 type LineChan = chan *Line
+type WriteOnlyLineChan = chan<- *Line
+type ReadOnlyLineChan = <-chan *Line
 
 // New creates a new LineStream reader
-func New(ctx context.Context, reader *bufio.Reader, out LineChan) {
+func New(ctx context.Context, reader *bufio.Reader, out WriteOnlyLineChan) {
 	linesRead := 0
 
 	go func() {
