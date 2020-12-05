@@ -91,18 +91,7 @@ func solveFirst(inp linestream.LineChan) <-chan int {
 	return out
 }
 
-func insert(ns []int, n int) []int {
-	for i, x := range ns {
-		if x > n {
-			head := ns[0:i]
-			tail := ns[i:]
-
-			return append(head, append([]int{n}, tail...)...)
-		}
-	}
-
-	return append(ns, n)
-}
+const iterThreshold = 10
 
 func solveSecond(inp linestream.LineChan) <-chan int {
 	out := make(chan int)
@@ -114,8 +103,9 @@ func solveSecond(inp linestream.LineChan) <-chan int {
 	go func() {
 		defer close(out)
 		for candidateID := range candidateIDs {
-			allIDs = insert(allIDs, candidateID)
+			allIDs = binsert(allIDs, candidateID)
 		}
+
 		for i, id := range allIDs[1:] {
 			prev := allIDs[i] // i starts from zero, so no need to subtract 1
 			if prev+2 == id {
