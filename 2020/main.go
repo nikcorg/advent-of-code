@@ -14,6 +14,7 @@ import (
 	"github.com/nikcorg/aoc2020/s3"
 	"github.com/nikcorg/aoc2020/s4"
 	"github.com/nikcorg/aoc2020/s5"
+	"github.com/nikcorg/aoc2020/s6"
 )
 
 const solved = 3
@@ -64,6 +65,8 @@ func getSolver(ctx context.Context, puzzle int, inputFilename string) Solver {
 		return s4.New(ctx, inputFilename)
 	case 5:
 		return s5.New(ctx, inputFilename)
+	case 6:
+		return s6.New(ctx, inputFilename)
 	default:
 		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d", puzzle))
 		showUsage(exUsage)
