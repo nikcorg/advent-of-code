@@ -37,11 +37,8 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(linestream.LineChan, bufSize)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	chunkedInput := make(linestream.ChunkedLineChan, bufSize)
-	linestream.Chunked(lineInput, chunkedInput)
-
 	passports := make(chan *passport, bufSize)
-	convStream(chunkedInput, passports)
+	convStream(linestream.WithChunking(lineInput), passports)
 
 	solution := <-solveStream(getValidator(part), passports)
 

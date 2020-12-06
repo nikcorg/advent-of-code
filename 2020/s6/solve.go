@@ -32,10 +32,7 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(linestream.LineChan, 1)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	chunkedInput := make(linestream.ChunkedLineChan)
-	linestream.Chunked(lineInput, chunkedInput)
-
-	groups := convStream(chunkedInput)
+	groups := convStream(linestream.WithChunking(lineInput))
 
 	solve := getSolver(part)
 	solution := <-solve(groups)
