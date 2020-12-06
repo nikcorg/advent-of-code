@@ -6,6 +6,14 @@ type ChunkedLineChan = chan Chunk
 type ReadOnlyChunkedLineChan = <-chan Chunk
 type WriteOnlyChunkedLineChan = chan<- Chunk
 
+func WithChunking(inp ReadOnlyLineChan) ReadOnlyChunkedLineChan {
+	out := make(ChunkedLineChan, cap(inp))
+
+	Chunked(inp, out)
+
+	return out
+}
+
 func Chunked(inp ReadOnlyLineChan, out WriteOnlyChunkedLineChan) {
 	var chunk Chunk
 
