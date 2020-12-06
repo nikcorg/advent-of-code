@@ -37,8 +37,11 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(linestream.LineChan, bufSize)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
+	chunkedInput := make(linestream.ChunkedLineChan, bufSize)
+	linestream.Chunked(lineInput, chunkedInput)
+
 	passports := make(chan *passport, bufSize)
-	convStream(lineInput, passports)
+	convStream(chunkedInput, passports)
 
 	solution := <-solveStream(getValidator(part), passports)
 
@@ -214,23 +217,19 @@ func (p *passport) SetFields(fs []kv) {
 	}
 }
 
-func convStream(inp linestream.LineChan, out chan *passport) {
+func convStream(inp linestream.ReadOnlyChunkedLineChan, out chan *passport) {
 	go func() {
 		defer close(out)
 
 		var p *passport = newPassport()
 
 		for v := range inp {
-			// passports are delimited by empty lines
-			if v.Content() == "" {
-				out <- p
-				p = newPassport()
-				continue
+			p = newPassport()
+			for _, l := range v {
+				p.SetFields(splitValues(l.Content()))
 			}
-			p.SetFields(splitValues(v.Content()))
+			out <- p
 		}
-
-		out <- p
 	}()
 }
 
