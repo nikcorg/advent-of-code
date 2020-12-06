@@ -196,9 +196,9 @@ func binsearch(cmp func(rune) ord, max int, input string) int {
 	for _, i := range input {
 		switch cmp(i) {
 		case hi:
-			cmin = cmax - (cmax-cmin)/2
+			cmin = cmax - (cmax-cmin-1)/2
 		case lo:
-			cmax = cmin + (cmax-cmin)/2
+			cmax = cmin + (cmax-cmin-1)/2
 		default:
 			panic(fmt.Errorf("broken compare function"))
 		}
