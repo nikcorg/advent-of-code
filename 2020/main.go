@@ -42,21 +42,23 @@ func main() {
 
 		inputFile := fmt.Sprintf("%s/%d.txt", inputDir, puzzle+1)
 
+		io.WriteString(os.Stdout, fmt.Sprintf("%d.1: ", puzzle+1))
 		startFirst := time.Now()
 		if err := runPuzzle(ctx, solver.SolveFirst, inputFile); err != nil {
 			io.WriteString(os.Stderr, err.Error())
 		} else {
 			durationFirst := time.Since(startFirst)
-			io.WriteString(os.Stdout, fmt.Sprintf("%d.1: duration=%v\n", puzzle+1, durationFirst))
+			io.WriteString(os.Stdout, fmt.Sprintf("duration=%v\n", durationFirst))
 		}
 
+		io.WriteString(os.Stdout, fmt.Sprintf("%d.2: ", puzzle+1))
 		startSecond := time.Now()
 		if err := runPuzzle(ctx, solver.SolveSecond, inputFile); err != nil {
 			io.WriteString(os.Stderr, err.Error())
 		} else {
 
 			durationSecond := time.Since(startSecond)
-			io.WriteString(os.Stdout, fmt.Sprintf("%d.2: duration=%v\n", puzzle+1, durationSecond))
+			io.WriteString(os.Stdout, fmt.Sprintf("duration=%v\n", durationSecond))
 		}
 	}
 
