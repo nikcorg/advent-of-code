@@ -33,8 +33,7 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(chan *linestream.Line, 0)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	filteredInput := make(chan *linestream.Line, 0)
-	linestream.SkipEmpty(lineInput, filteredInput)
+	filteredInput := linestream.SkipEmpty(lineInput)
 
 	solution := <-solveStream(getSolver(ctx, part, filteredInput))
 
@@ -45,7 +44,7 @@ func (s *Solver) Solve(part int) error {
 
 type partSolver = <-chan int
 
-func getSolver(ctx context.Context, part int, in linestream.LineChan) partSolver {
+func getSolver(ctx context.Context, part int, in linestream.ReadOnlyLineChan) partSolver {
 	muxxer := linestream.NewMuxxer(in)
 
 	switch part {

@@ -36,8 +36,7 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(chan *linestream.Line, bufSize)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	filteredInput := make(chan *linestream.Line, bufSize)
-	linestream.SkipEmpty(lineInput, filteredInput)
+	filteredInput := linestream.SkipEmpty(lineInput)
 
 	passwords := make(chan *passwordCandidate)
 	convStream(filteredInput, passwords)
@@ -119,7 +118,7 @@ func mustConv(in string) int {
 	return v
 }
 
-func convStream(in linestream.LineChan, out chan *passwordCandidate) {
+func convStream(in linestream.ReadOnlyLineChan, out chan *passwordCandidate) {
 	splitter := regexp.MustCompile(`^(\d+)-(\d+) (.): (.*)$`)
 
 	go func() {

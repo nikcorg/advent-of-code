@@ -34,9 +34,7 @@ func (s *Solver) Solve(part int) error {
 	lineInput := make(linestream.LineChan, 10)
 	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
 
-	filteredInput := make(linestream.LineChan, 10)
-	linestream.SkipEmpty(lineInput, filteredInput)
-
+	filteredInput := linestream.SkipEmpty(lineInput)
 	solution := <-getSolver(part)(filteredInput)
 
 	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
@@ -44,7 +42,7 @@ func (s *Solver) Solve(part int) error {
 	return nil
 }
 
-type solver func(inp linestream.LineChan) <-chan int
+type solver func(inp linestream.ReadOnlyLineChan) <-chan int
 
 func getSolver(part int) solver {
 	switch part {
@@ -58,7 +56,7 @@ func getSolver(part int) solver {
 	panic(fmt.Errorf("invalid part %d", part))
 }
 
-func solveFirst(inp linestream.LineChan) <-chan int {
+func solveFirst(inp linestream.ReadOnlyLineChan) <-chan int {
 	out := make(chan int, 0)
 
 	maxID := 0
@@ -93,7 +91,7 @@ func solveFirst(inp linestream.LineChan) <-chan int {
 
 const iterThreshold = 10
 
-func solveSecond(inp linestream.LineChan) <-chan int {
+func solveSecond(inp linestream.ReadOnlyLineChan) <-chan int {
 	out := make(chan int)
 
 	candidateIDs := make(chan int, 10) // buffered, so that it won't block the cipher calc

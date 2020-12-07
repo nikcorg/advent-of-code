@@ -1,6 +1,8 @@
 package linestream
 
-func SkipEmpty(in ReadOnlyLineChan, out WriteOnlyLineChan) {
+func SkipEmpty(in ReadOnlyLineChan) ReadOnlyLineChan {
+	out := make(LineChan, cap(in))
+
 	go func() {
 		defer close(out)
 
@@ -12,4 +14,6 @@ func SkipEmpty(in ReadOnlyLineChan, out WriteOnlyLineChan) {
 			out <- v
 		}
 	}()
+
+	return out
 }
