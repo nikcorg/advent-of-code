@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
-	"strconv"
-	"strings"
+	"time"
 
 	"github.com/nikcorg/aoc2020/s1"
 	"github.com/nikcorg/aoc2020/s2"
@@ -18,86 +16,104 @@ import (
 	"github.com/nikcorg/aoc2020/s7"
 )
 
-const solved = 3
-const usage = `usage: %s <puzzle> <input>
-- puzzle is a number between 1-%d
-- input is the path to the file`
+const solved = 7
+const inputDir = "_inputs"
+const testInputDir = "_tests"
 
-func showUsage(exitCode int) {
-	io.WriteString(os.Stderr, fmt.Sprintf(usage, path.Base(os.Args[0]), solved))
-	os.Exit(exitCode)
+type SolverFunc func(io.Reader) error
+
+func runPuzzle(ctx context.Context, sol SolverFunc, fileName string) error {
+	var err error
+
+	inputFile, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+	defer func() { inputFile.Close() }()
+
+	return sol(inputFile)
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		showUsage(exUsage)
+	ctx := context.Background()
+	start := time.Now()
+
+	for puzzle := 0; puzzle < solved; puzzle++ {
+		solver := getSolver(ctx, os.Stdout, puzzle+1)
+
+		inputFile := fmt.Sprintf("%s/%d.txt", inputDir, puzzle+1)
+
+		startFirst := time.Now()
+		if err := runPuzzle(ctx, solver.SolveFirst, inputFile); err != nil {
+			io.WriteString(os.Stderr, err.Error())
+		} else {
+			durationFirst := time.Since(startFirst)
+			io.WriteString(os.Stdout, fmt.Sprintf("%d.1: duration=%v\n", puzzle+1, durationFirst))
+		}
+
+		startSecond := time.Now()
+		if err := runPuzzle(ctx, solver.SolveSecond, inputFile); err != nil {
+			io.WriteString(os.Stderr, err.Error())
+		} else {
+
+			durationSecond := time.Since(startSecond)
+			io.WriteString(os.Stdout, fmt.Sprintf("%d.2: duration=%v\n", puzzle+1, durationSecond))
+		}
 	}
 
-	inputFile := os.Args[2]
-	puzzle, part, err := parsePuzzleArg(os.Args[1])
-
-	if err != nil {
-		io.WriteString(os.Stderr, err.Error())
-		showUsage(exUsage)
-	}
-
-	sol := getSolver(context.Background(), puzzle, inputFile)
-
-	if err := sol.Solve(part); err != nil {
-		io.WriteString(os.Stderr, err.Error())
-		os.Exit(1)
-	}
+	io.WriteString(os.Stdout, fmt.Sprintf("total duration %v\n", time.Since(start)))
 }
 
 // Solver makes problems go away
 type Solver interface {
-	Solve(part int) error
+	SolveFirst(inp io.Reader) error
+	SolveSecond(inp io.Reader) error
+	Solve(part int, inp io.Reader) error
 }
 
-func getSolver(ctx context.Context, puzzle int, inputFilename string) Solver {
+func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 	switch puzzle {
 	case 1:
-		return s1.New(ctx, inputFilename)
+		return s1.New(ctx, out)
 	case 2:
-		return s2.New(ctx, inputFilename)
+		return s2.New(ctx, out)
 	case 3:
-		return s3.New(ctx, inputFilename)
+		return s3.New(ctx, out)
 	case 4:
-		return s4.New(ctx, inputFilename)
+		return s4.New(ctx, out)
 	case 5:
-		return s5.New(ctx, inputFilename)
+		return s5.New(ctx, out)
 	case 6:
-		return s6.New(ctx, inputFilename)
+		return s6.New(ctx, out)
 	case 7:
-		return s7.New(ctx, inputFilename)
+		return s7.New(ctx, out)
 	default:
-		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d", puzzle))
-		showUsage(exUsage)
+		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d\n", puzzle))
 	}
 
 	return nil
 }
 
-func parsePuzzleArg(candidate string) (int, int, error) {
-	parts := strings.Split(candidate, ".")
-	if len(parts) != 2 {
-		return 0, 0, fmt.Errorf("expected puzzle to be n.1 or n.2, got: %s", candidate)
-	}
+// func parsePuzzleArg(candidate string) (int, int, error) {
+// 	parts := strings.Split(candidate, ".")
+// 	if len(parts) != 2 {
+// 		return 0, 0, fmt.Errorf("expected puzzle to be n.1 or n.2, got: %s", candidate)
+// 	}
 
-	var (
-		puzzle, part int
-		err          error
-	)
+// 	var (
+// 		puzzle, part int
+// 		err          error
+// 	)
 
-	puzzle, err = strconv.Atoi(parts[0])
-	if err != nil {
-		return 0, 0, fmt.Errorf("invalid puzzle: %s", parts[0])
-	}
+// 	puzzle, err = strconv.Atoi(parts[0])
+// 	if err != nil {
+// 		return 0, 0, fmt.Errorf("invalid puzzle: %s", parts[0])
+// 	}
 
-	part, err = strconv.Atoi(parts[1])
-	if err != nil {
-		return 0, 0, fmt.Errorf("invalid part: %s", parts[1])
-	}
+// 	part, err = strconv.Atoi(parts[1])
+// 	if err != nil {
+// 		return 0, 0, fmt.Errorf("invalid part: %s", parts[1])
+// 	}
 
-	return puzzle, part, nil
-}
+// 	return puzzle, part, nil
+// }

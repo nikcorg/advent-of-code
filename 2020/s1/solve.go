@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
@@ -15,29 +14,31 @@ import (
 type partSolver func(x int, xs []int) ([]int, bool)
 
 type Solver struct {
-	Ctx context.Context
-	Inp string
+	ctx context.Context
+	out io.Writer
 }
 
-func New(ctx context.Context, inputFile string) *Solver {
-	return &Solver{ctx, inputFile}
+func New(ctx context.Context, out io.Writer) *Solver {
+	return &Solver{ctx, out}
 }
 
-func (s *Solver) Solve(part int) error {
-	ctx, cancel := context.WithCancel(s.Ctx)
+func (s *Solver) SolveFirst(inp io.Reader) error {
+	return s.Solve(1, inp)
+}
+
+func (s *Solver) SolveSecond(inp io.Reader) error {
+	return s.Solve(2, inp)
+}
+
+func (s *Solver) Solve(part int, inp io.Reader) error {
+	ctx, cancel := context.WithCancel(s.ctx)
 	defer func() { cancel() }()
 
-	inputFile, err := os.Open(s.Inp)
-	if err != nil {
-		return err
-	}
-	defer func() { inputFile.Close() }()
-
 	input := make(chan *linestream.Line, 0)
-	linestream.New(ctx, bufio.NewReader(inputFile), input)
+	linestream.New(ctx, bufio.NewReader(inp), input)
 	multiplicands, product := splitResult(<-solveStream(getSolver(part), convStream(input)))
 
-	io.WriteString(os.Stdout, fmt.Sprintf("solution: %s=%d\n", strings.Join(stringify(multiplicands), "*"), product))
+	io.WriteString(s.out, fmt.Sprintf("solution: %s=%d\n", strings.Join(stringify(multiplicands), "*"), product))
 
 	return nil
 }

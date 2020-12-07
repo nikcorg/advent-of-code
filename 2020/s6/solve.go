@@ -12,25 +12,27 @@ import (
 )
 
 type Solver struct {
-	Ctx context.Context
-	Inp string
+	ctx context.Context
+	out io.Writer
 }
 
-func New(ctx context.Context, inputFilename string) *Solver {
-	return &Solver{ctx, inputFilename}
+func New(ctx context.Context, out io.Writer) *Solver {
+	return &Solver{ctx, out}
 }
 
-func (s *Solver) Solve(part int) error {
+func (s *Solver) SolveFirst(inp io.Reader) error {
+	return s.Solve(1, inp)
+}
+
+func (s *Solver) SolveSecond(inp io.Reader) error {
+	return s.Solve(2, inp)
+}
+
+func (s *Solver) Solve(part int, inp io.Reader) error {
 	ctx := context.Background()
 
-	inputFile, err := os.Open(s.Inp)
-	if err != nil {
-		return err
-	}
-	defer func() { inputFile.Close() }()
-
 	lineInput := make(linestream.LineChan, 1)
-	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
+	linestream.New(ctx, bufio.NewReader(inp), lineInput)
 
 	groups := convStream(linestream.WithChunking(lineInput))
 

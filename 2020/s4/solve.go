@@ -16,26 +16,28 @@ import (
 const bufSize = 1
 
 type Solver struct {
-	Ctx context.Context
-	Inp string
+	ctx context.Context
+	out io.Writer
 }
 
-func New(ctx context.Context, inputFile string) *Solver {
-	return &Solver{ctx, inputFile}
+func New(ctx context.Context, out io.Writer) *Solver {
+	return &Solver{ctx, out}
 }
 
-func (s *Solver) Solve(part int) error {
-	ctx, cancel := context.WithCancel(s.Ctx)
+func (s *Solver) SolveFirst(inp io.Reader) error {
+	return s.Solve(1, inp)
+}
+
+func (s *Solver) SolveSecond(inp io.Reader) error {
+	return s.Solve(2, inp)
+}
+
+func (s *Solver) Solve(part int, inp io.Reader) error {
+	ctx, cancel := context.WithCancel(s.ctx)
 	defer func() { cancel() }()
 
-	inputFile, err := os.Open(s.Inp)
-	if err != nil {
-		return err
-	}
-	defer func() { inputFile.Close() }()
-
 	lineInput := make(linestream.LineChan, bufSize)
-	linestream.New(ctx, bufio.NewReader(inputFile), lineInput)
+	linestream.New(ctx, bufio.NewReader(inp), lineInput)
 
 	passports := make(chan *passport, bufSize)
 	convStream(linestream.WithChunking(lineInput), passports)
