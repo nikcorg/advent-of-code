@@ -18,7 +18,6 @@ import (
 
 const solved = 7
 const inputDir = "_inputs"
-const testInputDir = "_tests"
 
 type SolverFunc func(io.Reader) error
 

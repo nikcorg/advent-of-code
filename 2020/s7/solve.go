@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"strconv"
 	"sync"
@@ -44,7 +43,7 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 
 	solution := <-solveStream(getSolver(part), containmentRules)
 
-	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
+	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
@@ -113,32 +112,37 @@ func solveFirst(rs ruleset) int {
 
 func solveSecond(rs ruleset) int {
 	total := 0
-
 	bags := make(chan int, 1)
+	wgAdd := sync.WaitGroup{}
+	wgAdd.Add(1)
+
 	go func() {
+		defer wgAdd.Done()
 		for cnt := range bags {
 			total += cnt
 		}
 	}()
 
-	wg := sync.WaitGroup{}
+	wgTraverse := sync.WaitGroup{}
 
 	var traverse func(*containmentRule, int)
 	traverse = func(r *containmentRule, multiplier int) {
-		defer wg.Done()
+		defer wgTraverse.Done()
 		for colour, num := range r.contains {
-			bags <- num * multiplier
-
-			wg.Add(1)
+			wgTraverse.Add(1)
 			go traverse(rs[colour], multiplier*num)
+
+			bags <- num * multiplier
 		}
 	}
 
-	wg.Add(1)
+	wgTraverse.Add(1)
 	go traverse(rs[colourToSolve], 1)
-	wg.Wait()
+	wgTraverse.Wait()
 
 	close(bags)
+
+	wgAdd.Wait()
 
 	return total
 }
@@ -152,8 +156,6 @@ func solveStream(solve solver, rules chan *containmentRule) chan int {
 		defer close(out)
 
 		for ir := range rules {
-			// fmt.Println(*ir)
-
 			if r, ok := allRules[ir.colour]; ok {
 				// a rule can exist before it's defined, if the colour is contained by another rule defined earlier
 				// we copy the `containedBy` from the existing stub rule into the incoming rule
@@ -176,7 +178,8 @@ func solveStream(solve solver, rules chan *containmentRule) chan int {
 			}
 		}
 
-		out <- solve(allRules)
+		total := solve(allRules)
+		out <- total
 	}()
 
 	return out

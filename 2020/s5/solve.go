@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"sync"
 
 	"github.com/nikcorg/aoc2020/utils/linestream"
@@ -40,7 +39,7 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 	filteredInput := linestream.SkipEmpty(lineInput)
 	solution := <-getSolver(part)(filteredInput)
 
-	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
+	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }

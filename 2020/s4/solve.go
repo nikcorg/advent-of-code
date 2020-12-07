@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,7 +43,7 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 
 	solution := <-solveStream(getValidator(part), passports)
 
-	io.WriteString(os.Stdout, fmt.Sprintf("solution: %d\n", solution))
+	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
