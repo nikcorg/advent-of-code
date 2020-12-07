@@ -93,27 +93,3 @@ func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 
 	return nil
 }
-
-// func parsePuzzleArg(candidate string) (int, int, error) {
-// 	parts := strings.Split(candidate, ".")
-// 	if len(parts) != 2 {
-// 		return 0, 0, fmt.Errorf("expected puzzle to be n.1 or n.2, got: %s", candidate)
-// 	}
-
-// 	var (
-// 		puzzle, part int
-// 		err          error
-// 	)
-
-// 	puzzle, err = strconv.Atoi(parts[0])
-// 	if err != nil {
-// 		return 0, 0, fmt.Errorf("invalid puzzle: %s", parts[0])
-// 	}
-
-// 	part, err = strconv.Atoi(parts[1])
-// 	if err != nil {
-// 		return 0, 0, fmt.Errorf("invalid part: %s", parts[1])
-// 	}
-
-// 	return puzzle, part, nil
-// }
