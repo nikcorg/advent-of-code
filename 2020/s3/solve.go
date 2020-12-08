@@ -32,11 +32,15 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 	defer func() { cancel() }()
 
 	lineInput := make(chan *linestream.Line, 0)
+	solver := getSolver(ctx, part, linestream.SkipEmpty(lineInput))
+
+	// Defer initialising the stream, so that all listeners have
+	// time to bind themselves to the Muxxer used by the second solver.
+	// Delayed signup to the Muxxer might lose messages, as it does
+	// not have internal buffering.
 	linestream.New(ctx, bufio.NewReader(inp), lineInput)
 
-	filteredInput := linestream.SkipEmpty(lineInput)
-
-	solution := <-solveStream(getSolver(ctx, part, filteredInput))
+	solution := <-solveStream(solver)
 
 	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
@@ -112,6 +116,7 @@ func multiSolve(inputs []<-chan int) <-chan int {
 		defer close(out)
 
 		wg.Wait()
+
 		product := 1
 		for _, r := range results {
 			product *= r
