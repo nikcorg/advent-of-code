@@ -111,11 +111,18 @@ func solveStream(solve solver, inp <-chan instruction) <-chan int {
 	return out
 }
 
-func runProgram(program []instruction, errorOnRevisit bool) (int, error) {
+func runProgram(ctx *context.Context, program []instruction, errorOnRevisit bool) (int, error) {
 	acc := 0
 	i := 0
 
 	for {
+		// select {
+		// case <-ctx.Done():
+		// 	return 0, errors.New("interrupted")
+
+		// default:
+		// }
+
 		if i >= len(program) {
 			break
 		} else if program[i].visited {
@@ -144,7 +151,8 @@ func runProgram(program []instruction, errorOnRevisit bool) (int, error) {
 }
 
 func solveFirst(program []instruction) int {
-	acc, err := runProgram(program, false)
+	ctx := context.Background()
+	acc, err := runProgram(&ctx, program, false)
 
 	if err != nil {
 		panic(err)
@@ -162,7 +170,7 @@ func solveSecond(program []instruction) int {
 	programs := make(chan []instruction, 10)
 
 	attempt := func(prog []instruction) {
-		acc, err := runProgram(prog, true)
+		acc, err := runProgram(&ctx, prog, true)
 
 		if err != nil {
 			return
