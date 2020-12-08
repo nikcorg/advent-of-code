@@ -101,7 +101,7 @@ func multiSolve(inputs []<-chan int) <-chan int {
 					if !ok {
 						return
 					}
-					// fmt.Printf("worker %d: %d\n", n, v)
+
 					results[n] = v
 				}
 			}
