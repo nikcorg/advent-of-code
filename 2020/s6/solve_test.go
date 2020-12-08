@@ -1,12 +1,12 @@
 package s6
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"strings"
 	"testing"
 
-	"github.com/nikcorg/aoc2020/utils/ob"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +28,7 @@ b
 `
 
 func TestSolver(t *testing.T) {
-	out := &ob.Capture{}
+	out := new(bytes.Buffer)
 	solver := New(context.Background(), out)
 
 	tests := []struct {

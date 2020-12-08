@@ -1,12 +1,12 @@
 package s8
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"strings"
 	"testing"
 
-	"github.com/nikcorg/aoc2020/utils/ob"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ jmp -4
 acc +6`
 
 func TestSolve(t *testing.T) {
-	out := &ob.Capture{}
+	out := new(bytes.Buffer)
 	solver := New(context.Background(), out)
 
 	tests := []struct {

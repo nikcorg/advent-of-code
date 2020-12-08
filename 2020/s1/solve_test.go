@@ -1,13 +1,13 @@
 package s1
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/nikcorg/aoc2020/utils/ob"
 )
 
 const input = `1721
@@ -19,7 +19,8 @@ const input = `1721
 `
 
 func TestFirst(t *testing.T) {
-	out := &ob.Capture{}
+	out := new(bytes.Buffer)
+
 	ctx := context.Background()
 	solver := New(ctx, out)
 
