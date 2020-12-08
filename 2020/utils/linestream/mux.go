@@ -1,26 +1,38 @@
 package linestream
 
+import (
+	"errors"
+	"sync"
+)
+
+var (
+	ErrMuxxerSourceClosed = errors.New("source channel closed")
+)
+
 type Muxxer struct {
-	source ReadOnlyLineChan
-	chans  []WriteOnlyLineChan
+	source     ReadOnlyLineChan
+	chans      []WriteOnlyLineChan
+	chansMutex sync.Mutex
+	closed     bool
 }
 
 func NewMuxxer(source ReadOnlyLineChan) *Muxxer {
-	r := &Muxxer{source: source}
+	r := &Muxxer{source: source, closed: false}
 
 	go r.listen()
 
 	return r
 }
 
-func (m *Muxxer) cleanup() {
+func (m *Muxxer) closeAll() {
+	m.closed = true
 	for _, c := range m.chans {
 		close(c)
 	}
 }
 
 func (m *Muxxer) listen() {
-	defer m.cleanup()
+	defer m.closeAll()
 
 	for {
 		select {
@@ -34,6 +46,10 @@ func (m *Muxxer) listen() {
 }
 
 func (m *Muxxer) bcast(v *Line) {
+	if m.closed {
+		return
+	}
+
 	for _, c := range m.chans {
 		c <- v
 	}
@@ -41,6 +57,15 @@ func (m *Muxxer) bcast(v *Line) {
 
 func (m *Muxxer) Recv() ReadOnlyLineChan {
 	out := make(LineChan)
-	m.chans = append(m.chans, out)
+
+	if m.closed {
+		close(out)
+	} else {
+		m.chansMutex.Lock()
+		defer m.chansMutex.Unlock()
+
+		m.chans = append(m.chans, out)
+	}
+
 	return out
 }
