@@ -1,16 +1,19 @@
-BINARY:="solve"
+BINARY:=solve
+COVERAGE_TMP:=c.out
 
 all: test build run clean
 
 build:
-	go build -o ${BINARY} *.go
+	@go build -o ${BINARY} *.go
 
 test:
-	go test -coverprofile=c.out ./...
+	@go test -coverprofile=${COVERAGE_TMP} ./...
+	#@go tool cover -func=${COVERAGE_TMP}
+	@unlink ${COVERAGE_TMP}
 
 run: build
-	./${BINARY}
+	@./${BINARY}
 
 clean:
-	rm ${BINARY}
+	@rm ${BINARY}
 
