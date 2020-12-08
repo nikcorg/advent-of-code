@@ -14,9 +14,10 @@ import (
 	"github.com/nikcorg/aoc2020/s5"
 	"github.com/nikcorg/aoc2020/s6"
 	"github.com/nikcorg/aoc2020/s7"
+	"github.com/nikcorg/aoc2020/s8"
 )
 
-const solved = 7
+const solved = 8
 const inputDir = "_inputs"
 
 type SolverFunc func(io.Reader) error
@@ -88,6 +89,8 @@ func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 		return s6.New(ctx, out)
 	case 7:
 		return s7.New(ctx, out)
+	case 8:
+		return s8.New(ctx, out)
 	default:
 		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d\n", puzzle))
 	}
