@@ -6,7 +6,7 @@ build:
 	go build -o ${BINARY} *.go
 
 test:
-	go test ./...
+	go test -coverprofile=c.out ./...
 
 run: build
 	./${BINARY}
