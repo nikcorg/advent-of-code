@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/nikcorg/aoc2020/utils/linestream"
+	"github.com/nikcorg/aoc2020/utils/slices"
 )
 
 type Solver struct {
@@ -97,13 +98,13 @@ func solveSecond(inp linestream.ReadOnlyLineChan) <-chan int {
 	out := make(chan int)
 
 	candidateIDs := make(chan int, 10) // buffered, so that it won't block the cipher calc
-	allIDs := []int{}
+	allIDs := slices.SortedIntSlice{}
 
 	// accumulate a sorted list of IDs and finally scan for gap in sequence
 	go func() {
 		defer close(out)
 		for candidateID := range candidateIDs {
-			allIDs = binsert(allIDs, candidateID)
+			allIDs = allIDs.Insert(candidateID)
 		}
 
 		for i, id := range allIDs[1:] {
