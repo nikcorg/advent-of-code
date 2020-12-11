@@ -107,9 +107,7 @@ func diff(a, b int) int {
 }
 
 func solveForks(adapters slices.SortedIntSlice) int {
-	if len(adapters) < 3 {
-		return 1
-	}
+	solution := 1
 
 	left := 0
 	right := left + 1
@@ -118,38 +116,36 @@ func solveForks(adapters slices.SortedIntSlice) int {
 	for right < len(adapters) {
 		leftVal := adapters[left]
 		rightVal := adapters[right]
-		leftRightDiff := diff(leftVal, rightVal)
 
-		if leftRightDiff < 3 {
+		if diff(leftVal, rightVal) < 3 {
 			left++
 			right = left + 1
 			continue
 		}
 
-		sequence := adapters[seqStart:right]
+		sequenceLen := right - seqStart
 
-		if len(sequence) > 5 {
-			panic(fmt.Errorf("unhandled sequence length: %d", len(sequence)))
+		if sequenceLen > 5 {
+			panic(fmt.Errorf("unhandled sequence length: %d", sequenceLen))
 		}
 
-		switch len(sequence) {
+		switch sequenceLen {
 		case 5:
-			return 7 * solveForks(adapters[right:])
+			solution *= 7
 
 		case 4:
-			return 4 * solveForks(adapters[right:])
+			solution *= 4
 
 		case 3:
-			return 2 * solveForks(adapters[right:])
+			solution *= 2
 		}
 
-		// break in sequence without a run, move along
 		left = right
 		right = left + 1
 		seqStart = left
 	}
 
-	return 1
+	return solution
 }
 
 func mustAtoi(s string) int {
