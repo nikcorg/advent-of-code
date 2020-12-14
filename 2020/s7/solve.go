@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"regexp"
-	"strconv"
 	"sync"
 
+	"github.com/nikcorg/aoc2020/utils"
 	"github.com/nikcorg/aoc2020/utils/linestream"
 )
 
@@ -206,19 +206,11 @@ func convStream(inp linestream.ReadOnlyLineChan, out chan<- *containmentRule) {
 
 			for _, cr := range containsSplitter.FindAllStringSubmatch(contains, -1) {
 				containedColour := cr[3]
-				containedAmount := mustAtoi(cr[2])
+				containedAmount := utils.MustAtoi(cr[2])
 				rule.contains[containedColour] = containedAmount
 			}
 
 			out <- rule
 		}
 	}()
-}
-
-func mustAtoi(s string) int {
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		panic(err)
-	}
-	return n
 }

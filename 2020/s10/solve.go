@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"strconv"
 
+	"github.com/nikcorg/aoc2020/utils"
 	"github.com/nikcorg/aoc2020/utils/linestream"
 	"github.com/nikcorg/aoc2020/utils/slices"
 )
@@ -63,7 +63,7 @@ func solveFirst(inp linestream.ReadOnlyLineChan) int {
 	adapters := slices.SortedIntSlice{0}
 
 	for line := range inp {
-		adapters = adapters.Insert(mustAtoi(line.Content()))
+		adapters = adapters.Insert(utils.MustAtoi(line.Content()))
 	}
 
 	diff1 := 0
@@ -93,7 +93,7 @@ func solveSecond(inp linestream.ReadOnlyLineChan) int {
 	adapters := slices.SortedIntSlice{0}
 
 	for line := range inp {
-		adapters = adapters.Insert(mustAtoi(line.Content()))
+		adapters = adapters.Insert(utils.MustAtoi(line.Content()))
 	}
 
 	adapters = adapters.Append(adapters.Last() + 3)
@@ -146,12 +146,4 @@ func solveForks(adapters slices.SortedIntSlice) int {
 	}
 
 	return solution
-}
-
-func mustAtoi(s string) int {
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		panic(err)
-	}
-	return v
 }
