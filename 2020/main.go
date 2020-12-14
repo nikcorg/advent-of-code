@@ -10,6 +10,7 @@ import (
 	"github.com/nikcorg/aoc2020/s1"
 	"github.com/nikcorg/aoc2020/s10"
 	"github.com/nikcorg/aoc2020/s11"
+	"github.com/nikcorg/aoc2020/s12"
 	"github.com/nikcorg/aoc2020/s2"
 	"github.com/nikcorg/aoc2020/s3"
 	"github.com/nikcorg/aoc2020/s4"
@@ -18,9 +19,10 @@ import (
 	"github.com/nikcorg/aoc2020/s7"
 	"github.com/nikcorg/aoc2020/s8"
 	"github.com/nikcorg/aoc2020/s9"
+	"github.com/nikcorg/aoc2020/utils"
 )
 
-const solved = 11
+const solved = 12
 const inputDir = "_inputs"
 
 type SolverFunc func(io.Reader) error
@@ -41,7 +43,18 @@ func main() {
 	ctx := context.Background()
 	start := time.Now()
 
-	for puzzle := 0; puzzle < solved; puzzle++ {
+	startAt := 0
+	stopAt := solved
+
+	if len(os.Args) > 1 {
+		startAt = utils.MustAtoi(os.Args[1]) - 1
+	}
+
+	if len(os.Args) > 2 {
+		stopAt = utils.MustAtoi(os.Args[2])
+	}
+
+	for puzzle := startAt; puzzle < stopAt; puzzle++ {
 		solver := getSolver(ctx, os.Stdout, puzzle+1)
 
 		inputFile := fmt.Sprintf("%s/%d.txt", inputDir, puzzle+1)
@@ -100,6 +113,8 @@ func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 		return s10.New(ctx, out)
 	case 11:
 		return s11.New(ctx, out)
+	case 12:
+		return s12.New(ctx, out)
 	default:
 		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d\n", puzzle))
 	}
