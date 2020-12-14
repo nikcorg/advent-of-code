@@ -39,20 +39,33 @@ func runPuzzle(ctx context.Context, sol SolverFunc, fileName string) error {
 	return sol(inputFile)
 }
 
+func parseArgs() (int, int) {
+	var startAt, stopAt int = 0, solved
+
+	if len(os.Args) > 1 {
+
+		firstArg := os.Args[1]
+
+		if firstArg[0] == '-' {
+			startAt = 0
+			stopAt = utils.MustAtoi(firstArg[1:])
+		} else if firstArg[len(firstArg)-1] == '-' {
+			startAt = utils.MustAtoi(firstArg[0 : len(firstArg)-1])
+			stopAt = solved
+		} else {
+			stopAt = utils.MustAtoi(firstArg)
+			startAt = stopAt - 1
+		}
+	}
+
+	return startAt, stopAt
+}
+
 func main() {
 	ctx := context.Background()
 	start := time.Now()
 
-	startAt := 0
-	stopAt := solved
-
-	if len(os.Args) > 1 {
-		startAt = utils.MustAtoi(os.Args[1]) - 1
-	}
-
-	if len(os.Args) > 2 {
-		stopAt = utils.MustAtoi(os.Args[2])
-	}
+	startAt, stopAt := parseArgs()
 
 	for puzzle := startAt; puzzle < stopAt; puzzle++ {
 		solver := getSolver(ctx, os.Stdout, puzzle+1)
