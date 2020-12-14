@@ -100,8 +100,9 @@ func (f *floormap) OccupiedVisibleFrom(x, y int) int {
 	occupied := 0
 	nearestSeatMap := map[string]tileKind{}
 	done := false
+	satisfied := 0
 
-	for dist := 1; !done && occupied < 8; dist++ {
+	for dist := 1; !done && satisfied < 8; dist++ {
 		// check all directions clockwise
 		checks := []struct {
 			dir string
@@ -134,6 +135,7 @@ func (f *floormap) OccupiedVisibleFrom(x, y int) int {
 			done = false
 
 			if _, ok := nearestSeatMap[check.dir]; !ok && (tile == occupiedSeat || tile == emptySeat) {
+				satisfied++
 				switch tile {
 				case occupiedSeat:
 					occupied++

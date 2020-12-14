@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/nikcorg/aoc2020/utils/linestream"
 )
@@ -148,26 +149,38 @@ func step(fm *floormap, tm tileMapper) (*floormap, bool) {
 	nextMap.Init(prevMap.Width(), prevMap.Height())
 	didChange := false
 
-	for y := 0; y < prevMap.Height(); y++ {
-		for x := 0; x < prevMap.Width(); x++ {
-			tile, err := prevMap.TileAt(x, y)
+	wg := sync.WaitGroup{}
 
-			if err != nil {
-				if err == errInvalidCoordinate {
+	for x := 0; x < prevMap.Width(); x++ {
+		x := x
+		wg.Add(1)
+
+		// Spawn goroutine for each X-column
+		go func() {
+			defer wg.Done()
+
+			for y := 0; y < prevMap.Height(); y++ {
+				tile, err := prevMap.TileAt(x, y)
+
+				if err != nil {
+					if err == errInvalidCoordinate {
+						continue
+					}
+					panic(err)
+				}
+
+				if nextTile := tm(prevMap, tile, x, y); nextTile != tile {
+					nextMap.SetTileAt(x, y, nextTile)
+					didChange = true
 					continue
 				}
-				panic(err)
-			}
 
-			if nextTile := tm(prevMap, tile, x, y); nextTile != tile {
-				nextMap.SetTileAt(x, y, nextTile)
-				didChange = true
-				continue
+				nextMap.SetTileAt(x, y, tile)
 			}
-
-			nextMap.SetTileAt(x, y, tile)
-		}
+		}()
 	}
+
+	wg.Wait()
 
 	return nextMap, didChange
 }
