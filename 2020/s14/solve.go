@@ -185,9 +185,9 @@ func solveSecond(inp <-chan *Operation) int64 {
 					head := xs[0:p]
 					tail := xs[p+1:]
 					nextPrefix := prefix + strings.Join(head, "")
-					first := mapFloatingBits(nextPrefix+"0", tail)
-					second := mapFloatingBits(nextPrefix+"1", tail)
-					return append(append([]string{}, first...), second...)
+					zero := mapFloatingBits(nextPrefix+"0", tail)
+					one := mapFloatingBits(nextPrefix+"1", tail)
+					return append(append([]string{}, zero...), one...)
 				}
 			}
 
