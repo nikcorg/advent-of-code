@@ -104,11 +104,3 @@ func solve(init string, stopAfter int) int {
 
 	return lastSpoken
 }
-
-func last(xs []int) int {
-	return xs[len(xs)-1]
-}
-
-func penultimate(xs []int) int {
-	return xs[len(xs)-2]
-}
