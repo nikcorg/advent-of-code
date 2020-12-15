@@ -12,6 +12,7 @@ import (
 	"github.com/nikcorg/aoc2020/s11"
 	"github.com/nikcorg/aoc2020/s12"
 	"github.com/nikcorg/aoc2020/s13"
+	"github.com/nikcorg/aoc2020/s14"
 	"github.com/nikcorg/aoc2020/s2"
 	"github.com/nikcorg/aoc2020/s3"
 	"github.com/nikcorg/aoc2020/s4"
@@ -131,6 +132,8 @@ func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 		return s12.New(ctx, out)
 	case 13:
 		return s13.New(ctx, out)
+	case 14:
+		return s14.New(ctx, out)
 	default:
 		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d\n", puzzle))
 	}
