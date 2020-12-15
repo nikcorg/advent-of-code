@@ -70,14 +70,16 @@ const lastMention = 0
 const penultimateMention = 1
 const empty = 0
 
+type mentionRecord [2]int
+
 func solve(init string, stopAfter int) int {
-	mentionLog := map[int][2]int{}
+	mentionLog := map[int]mentionRecord{}
 	lastSpoken := 0
 	turn := 1
 
 	for _, n := range strings.Split(init, ",") {
 		lastSpoken = utils.MustAtoi(n)
-		mentionLog[lastSpoken] = [2]int{turn, empty}
+		mentionLog[lastSpoken] = mentionRecord{turn, empty}
 		turn++
 	}
 
@@ -98,7 +100,7 @@ func solve(init string, stopAfter int) int {
 			lsMentions[penultimateMention], lsMentions[lastMention] = lsMentions[lastMention], turn
 			mentionLog[lastSpoken] = lsMentions
 		} else {
-			mentionLog[lastSpoken] = [2]int{turn, empty}
+			mentionLog[lastSpoken] = mentionRecord{turn, empty}
 		}
 	}
 
