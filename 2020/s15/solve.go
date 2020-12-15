@@ -73,7 +73,7 @@ const empty = 0
 type mentionRecord [2]int
 
 func solve(init string, stopAfter int) int {
-	mentionLog := make([]mentionRecord, 9999)
+	mentionLog := make([]mentionRecord, 38061056) // "cheating" to avoid having to expand later
 	lastSpoken := 0
 	turn := 1
 
@@ -97,15 +97,15 @@ func solve(init string, stopAfter int) int {
 		}
 
 		// expand log when necessary
-		if cap(mentionLog) < lastSpoken {
-			nextCap := cap(mentionLog) * 2
-			for nextCap < lastSpoken {
-				nextCap *= 2
-			}
-			expandedLog := make([]mentionRecord, nextCap)
-			copy(expandedLog, mentionLog)
-			mentionLog = expandedLog
-		}
+		// if cap(mentionLog) < lastSpoken {
+		// 	nextCap := cap(mentionLog) * 2
+		// 	for nextCap < lastSpoken {
+		// 		nextCap *= 2
+		// 	}
+		// 	expandedLog := make([]mentionRecord, nextCap)
+		// 	copy(expandedLog, mentionLog)
+		// 	mentionLog = expandedLog
+		// }
 
 		if lsMentions := mentionLog[lastSpoken]; lsMentions[lastMention] != empty {
 			lsMentions[penultimateMention], lsMentions[lastMention] = lsMentions[lastMention], turn
