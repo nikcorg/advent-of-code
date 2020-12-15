@@ -32,7 +32,6 @@ func TestSolve(t *testing.T) {
 	tests := []testCase{}
 
 	for _, inp := range inputs {
-		t.Logf("expect %s from %s", inp[1], inp[0])
 		tests = append(tests, testCase{solver.SolveFirst, fmt.Sprintf("solution: %s\n", inp[1]), inp[0]})
 		tests = append(tests, testCase{solver.SolveSecond, fmt.Sprintf("solution: %s\n", inp[2]), inp[0]})
 	}

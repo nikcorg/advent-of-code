@@ -66,41 +66,39 @@ func solveSecond(inp linestream.ReadOnlyLineChan) int {
 	return solve(init.Content(), 30_000_000)
 }
 
+const previousMention = 0
+const penultimateMention = 1
+const unmentioned = -1
+
 func solve(init string, stopAfter int) int {
-	numbers := map[int][]int{}
+	numbers := map[int][2]int{}
 	lastSpoken := 0
 	turn := 1
 
 	for _, n := range strings.Split(init, ",") {
 		lastSpoken = utils.MustAtoi(n)
-		numbers[lastSpoken] = []int{turn}
+		numbers[lastSpoken] = [2]int{turn, unmentioned}
 		turn++
 	}
 
-	// fmt.Printf("after initial numbers the log says: %+v\n", numbers)
-
 	for ; turn <= stopAfter; turn++ {
-		// fmt.Printf("new turn: %d, last spoken was %d, ", turn, lastSpoken)
-		wasLastSpoken := numbers[lastSpoken]
+		mentions := numbers[lastSpoken]
 
-		if len(wasLastSpoken) == 1 && last(wasLastSpoken)+1 == turn {
-			// fmt.Printf("it was first mentioned on last turn (%+v)", wasLastSpoken)
+		if mentions[penultimateMention] == unmentioned && mentions[previousMention]+1 == turn {
 			lastSpoken = 0
 		} else {
-			lastMentioned := last(wasLastSpoken)
-			penultimateMention := penultimate(wasLastSpoken)
-			mentionDiff := lastMentioned - penultimateMention
-
-			// fmt.Printf("it was last mentioned on turns %d and %d, which was %d turns apart", lastMentioned, penultimateMention, mentionDiff)
+			lm := mentions[previousMention]
+			pm := mentions[penultimateMention]
+			mentionDiff := lm - pm
 
 			lastSpoken = mentionDiff
-
 		}
 
 		if log, ok := numbers[lastSpoken]; ok {
-			numbers[lastSpoken] = append(log, turn)
+			log[penultimateMention], log[previousMention] = log[previousMention], turn
+			numbers[lastSpoken] = log
 		} else {
-			numbers[lastSpoken] = []int{turn}
+			numbers[lastSpoken] = [2]int{turn, unmentioned}
 		}
 	}
 
