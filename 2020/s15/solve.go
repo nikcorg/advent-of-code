@@ -86,14 +86,14 @@ func solve(init string, stopAfter int) int {
 	for ; turn <= stopAfter; turn++ {
 		mentions := mentionLog[lastSpoken]
 
-		if mentions[penultimateMention] == empty && mentions[lastMention]+1 == turn {
-			lastSpoken = 0
-		} else {
+		if mentions[penultimateMention] != empty {
 			last := mentions[lastMention]
 			penultimate := mentions[penultimateMention]
 			mentionDiff := last - penultimate
 
 			lastSpoken = mentionDiff
+		} else {
+			lastSpoken = 0
 		}
 
 		if lsMentions, ok := mentionLog[lastSpoken]; ok {
