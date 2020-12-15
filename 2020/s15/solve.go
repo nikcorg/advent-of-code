@@ -73,7 +73,7 @@ const empty = 0
 type mentionRecord [2]int
 
 func solve(init string, stopAfter int) int {
-	mentionLog := map[int]mentionRecord{}
+	mentionLog := make([]mentionRecord, 9999)
 	lastSpoken := 0
 	turn := 1
 
@@ -96,7 +96,18 @@ func solve(init string, stopAfter int) int {
 			lastSpoken = 0
 		}
 
-		if lsMentions, ok := mentionLog[lastSpoken]; ok {
+		// expand log when necessary
+		if cap(mentionLog) < lastSpoken {
+			nextCap := cap(mentionLog) * 2
+			for nextCap < lastSpoken {
+				nextCap *= 2
+			}
+			expandedLog := make([]mentionRecord, nextCap)
+			copy(expandedLog, mentionLog)
+			mentionLog = expandedLog
+		}
+
+		if lsMentions := mentionLog[lastSpoken]; lsMentions[lastMention] != empty {
 			lsMentions[penultimateMention], lsMentions[lastMention] = lsMentions[lastMention], turn
 			mentionLog[lastSpoken] = lsMentions
 		} else {
