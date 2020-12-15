@@ -81,14 +81,14 @@ func getSolver(part int) solver {
 
 func solveFirst(inp *configuration) uint64 {
 	busID := inp.buses[0]
-	departure := (inp.earliestTime/busID + 1) * busID
+	departure := inp.earliestTime - inp.earliestTime%busID + busID
 
 	for _, bus := range inp.buses[1:] {
 		if bus == 0 {
 			continue
 		}
 
-		busDeparture := (inp.earliestTime/bus + 1) * bus
+		busDeparture := inp.earliestTime - inp.earliestTime%bus + bus
 		if busDeparture < departure {
 			busID = bus
 			departure = busDeparture
