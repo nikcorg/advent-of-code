@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"math/bits"
 	"strings"
 
@@ -202,17 +201,51 @@ func solveSecond(inp linestream.ReadOnlyLineChan) int {
 	for fid, fieldMask := range identifiedFields {
 		var (
 			f   *FieldConfiguration
-			val int
+			val int = ownTicket[fid]
 		)
 
 		// match the column to a field
-		for b := 0; b <= numFields; b++ {
-			bitMask := uint(math.Pow(2, float64(b)))
-			if bitMask&fieldMask != 0 {
-				f = tv.fields[b]
-				val = ownTicket[fid]
-				break
-			}
+		switch {
+		case fieldMask&bit01 != 0:
+			f = tv.fields[0]
+		case fieldMask&bit02 != 0:
+			f = tv.fields[1]
+		case fieldMask&bit03 != 0:
+			f = tv.fields[2]
+		case fieldMask&bit04 != 0:
+			f = tv.fields[3]
+		case fieldMask&bit05 != 0:
+			f = tv.fields[4]
+		case fieldMask&bit06 != 0:
+			f = tv.fields[5]
+		case fieldMask&bit07 != 0:
+			f = tv.fields[6]
+		case fieldMask&bit08 != 0:
+			f = tv.fields[7]
+		case fieldMask&bit09 != 0:
+			f = tv.fields[8]
+		case fieldMask&bit10 != 0:
+			f = tv.fields[9]
+		case fieldMask&bit11 != 0:
+			f = tv.fields[10]
+		case fieldMask&bit12 != 0:
+			f = tv.fields[11]
+		case fieldMask&bit13 != 0:
+			f = tv.fields[12]
+		case fieldMask&bit14 != 0:
+			f = tv.fields[13]
+		case fieldMask&bit15 != 0:
+			f = tv.fields[14]
+		case fieldMask&bit16 != 0:
+			f = tv.fields[15]
+		case fieldMask&bit17 != 0:
+			f = tv.fields[16]
+		case fieldMask&bit18 != 0:
+			f = tv.fields[17]
+		case fieldMask&bit19 != 0:
+			f = tv.fields[18]
+		case fieldMask&bit20 != 0:
+			f = tv.fields[19]
 		}
 
 		// fmt.Printf("fid=%2d, mask=%020s, idx=%2d, name=%20s, value=%d\n", fid, strconv.FormatInt(int64(fieldMask), 2), idx, f.name, val)
