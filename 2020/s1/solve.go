@@ -11,7 +11,8 @@ import (
 	"github.com/nikcorg/aoc2020/utils/linestream"
 )
 
-type partSolver func(x int, xs []int) ([]int, bool)
+type void struct{}
+type partSolver func(x int, xs map[int]void) ([]int, bool)
 
 type Solver struct {
 	ctx context.Context
@@ -36,7 +37,7 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 
 	input := make(chan *linestream.Line, 0)
 	linestream.New(ctx, bufio.NewReader(inp), input)
-	multiplicands, product := splitResult(<-solveStream(getSolver(part), convStream(input)))
+	multiplicands, product := splitResult(<-solveStream(getSolver(part), convStream(linestream.SkipEmpty(input))))
 
 	io.WriteString(s.out, fmt.Sprintf("solution: %s=%d\n", strings.Join(stringify(multiplicands), "*"), product))
 
@@ -70,23 +71,40 @@ func splitResult(xs []int) ([]int, int) {
 	return rest, solution
 }
 
-func solveSecond(x int, xs []int) ([]int, bool) {
-	for i, n := range xs {
-		for _, m := range xs[i+1:] {
-			if x+n+m == 2020 {
-				return []int{x, n, m, x * n * m}, true
+func solveSecond(x int, xs map[int]void) ([]int, bool) {
+	n := 2020 - x
+
+	for k := range xs {
+		m := n - k
+
+		if m < 0 {
+			continue
+		}
+
+		if _, ok := xs[m]; ok {
+			// sort the numbers before returning for a stable result
+			if x > m {
+				x, m = m, x
 			}
+			if m > k {
+				m, k = k, m
+			}
+
+			return []int{x, m, k, x * m * k}, true
 		}
 	}
 
 	return []int{}, false
 }
 
-func solveFirst(x int, xs []int) ([]int, bool) {
-	for _, n := range xs {
-		if n+x == 2020 {
-			return []int{n, x, n * x}, true
+func solveFirst(x int, xs map[int]void) ([]int, bool) {
+	k := 2020 - x
+
+	if _, ok := xs[k]; ok {
+		if x > k {
+			x, k = k, x
 		}
+		return []int{x, k, x * k}, true
 	}
 
 	return []int{}, false
@@ -95,7 +113,8 @@ func solveFirst(x int, xs []int) ([]int, bool) {
 func solveStream(solve partSolver, in chan int) chan []int {
 	out := make(chan []int, 1)
 
-	var inputs []int
+	var inputs = make(map[int]void)
+	var Void = struct{}{}
 
 	go func() {
 		defer close(out)
@@ -112,7 +131,7 @@ func solveStream(solve partSolver, in chan int) chan []int {
 					return
 				}
 
-				inputs = append(inputs, v)
+				inputs[v] = Void
 			}
 		}
 	}()
@@ -120,24 +139,18 @@ func solveStream(solve partSolver, in chan int) chan []int {
 	return out
 }
 
-func convStream(in linestream.LineChan) chan int {
+func convStream(in linestream.ReadOnlyLineChan) chan int {
 	out := make(chan int)
 
 	go func() {
 		defer close(out)
-		for {
-			select {
-			case v, ok := <-in:
-				if !ok {
-					return
-				}
 
-				intval, err := strconv.Atoi(v.Content())
-				if err != nil {
-					panic(fmt.Errorf("error converting %v to int: %v", v, err))
-				}
-				out <- intval
+		for v := range in {
+			intval, err := strconv.Atoi(v.Content())
+			if err != nil {
+				panic(fmt.Errorf("error converting %v to int: %v", v, err))
 			}
+			out <- intval
 		}
 	}()
 

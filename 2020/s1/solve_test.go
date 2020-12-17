@@ -28,8 +28,8 @@ func TestFirst(t *testing.T) {
 		solver   func(io.Reader) error
 		expected string
 	}{
-		{solver.SolveFirst, "solution: 1721*299=514579\n"},
-		{solver.SolveSecond, "solution: 675*979*366=241861950\n"},
+		{solver.SolveFirst, "solution: 299*1721=514579\n"},
+		{solver.SolveSecond, "solution: 366*675*979=241861950\n"},
 	}
 
 	for _, test := range tests {
