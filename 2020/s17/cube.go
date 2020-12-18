@@ -1,12 +1,16 @@
 package s17
 
+import "sync"
+
 type cube struct {
 	pos        Position
 	neighbours []Position
 	isactive   bool
 }
 
-func (c *cube) Update(world *World) *Update {
+func (c *cube) Update(world *World, updates chan<- *Update, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	activeNeighbours := 0
 	for _, n := range c.neighbours {
 		s := world.StateAt(n)
@@ -21,11 +25,9 @@ func (c *cube) Update(world *World) *Update {
 
 	if c.isactive && activeNeighbours != 2 && activeNeighbours != 3 {
 		c.isactive = false
-		return world.Update(c.pos, inactiveConwayCube)
+		updates <- world.Update(c.pos, inactiveConwayCube)
 	} else if !c.isactive && activeNeighbours == 3 {
 		c.isactive = true
-		return world.Update(c.pos, activeConwayCube)
+		updates <- world.Update(c.pos, activeConwayCube)
 	}
-
-	return nil
 }
