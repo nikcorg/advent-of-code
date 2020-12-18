@@ -15,6 +15,7 @@ import (
 	"github.com/nikcorg/aoc2020/s14"
 	"github.com/nikcorg/aoc2020/s15"
 	"github.com/nikcorg/aoc2020/s16"
+	"github.com/nikcorg/aoc2020/s17"
 	"github.com/nikcorg/aoc2020/s2"
 	"github.com/nikcorg/aoc2020/s3"
 	"github.com/nikcorg/aoc2020/s4"
@@ -26,7 +27,7 @@ import (
 	"github.com/nikcorg/aoc2020/utils"
 )
 
-const solved = 16
+const solved = 17
 const inputDir = "_inputs"
 
 type SolverFunc func(io.Reader) error
@@ -140,8 +141,11 @@ func getSolver(ctx context.Context, out io.Writer, puzzle int) Solver {
 		return s15.New(ctx, out)
 	case 16:
 		return s16.New(ctx, out)
+	case 17:
+		return s17.New(ctx, out, 6)
 	default:
 		io.WriteString(os.Stderr, fmt.Sprintf("unknown puzzle: %d\n", puzzle))
+		os.Exit(1)
 	}
 
 	return nil
