@@ -2,9 +2,6 @@ package s17
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"sync"
 )
 
 const activeConwayCube = "#"
@@ -16,114 +13,48 @@ type Update struct {
 	state string
 }
 
-type WorldEvent struct {
-	wg  sync.WaitGroup
-	n   int
-	sem sync.Mutex
-}
-
-func (e *WorldEvent) Add(delta int) {
-	e.sem.Lock()
-	defer e.sem.Unlock()
-	e.wg.Add(delta)
-	e.n += delta
-}
-
-func (e *WorldEvent) Done() {
-	e.sem.Lock()
-	defer e.sem.Unlock()
-	e.wg.Done()
-	e.n--
-	// fmt.Println("Done event received", e.n, "remaining")
-}
-
-func (e *WorldEvent) Wait() {
-	e.wg.Wait()
-}
-
 type World struct {
-	started           bool
 	ctx               context.Context
 	turn              int
 	currentState      map[string]string
 	stateUpdates      []*Update
-	updates           chan *Update
-	stateMutex        sync.Mutex
-	events            *EventMuxxer
-	eventSource       chan *WorldEvent
-	cubeWorkers       int
-	turnWG            *WorldEvent
 	coordinateFactory func(Position) []Position
+	cubes             []*cube
 }
 
 func newWorld(ctx context.Context, cf func(Position) []Position) *World {
 	w := World{}
 	w.ctx = ctx
 	w.currentState = make(map[string]string)
-	w.eventSource = make(chan *WorldEvent)
-	w.events = NewMuxxer(w.eventSource)
-	w.updates = make(chan *Update, 1)
 	w.coordinateFactory = cf
-	go w.receiveUpdates()
 
 	return &w
 }
 
-func (w *World) receiveUpdates() {
-	for {
-		select {
-		case <-w.ctx.Done():
-			return
+func (w *World) NextTurn() {
+	w.stateUpdates = []*Update{}
 
-		case u := <-w.updates:
+	for _, c := range w.cubes {
+		if u := c.Update(w); u != nil {
 			w.stateUpdates = append(w.stateUpdates, u)
 		}
 	}
-}
 
-func (w *World) Events() <-chan *WorldEvent {
-	return w.events.Recv()
-}
-
-func (w *World) NextTurn() {
-	w.StartTurn()
-	w.turnWG.Wait()
 	w.EndTurn()
 }
 
-func (w *World) StartTurn() {
-	w.stateMutex.Lock()
-	defer w.stateMutex.Unlock()
-
-	w.started = true
-	w.turnWG = &WorldEvent{}
-	w.turnWG.Add(w.cubeWorkers)
-
-	w.eventSource <- w.turnWG
-}
-
 func (w *World) EndTurn() {
-	w.stateMutex.Lock()
-	defer w.stateMutex.Unlock()
-
-	spinups := sync.WaitGroup{}
 	indirectUpdates := map[string]*Update{} // using a map with `x,y,z` as key, as it will avoid duplicate updates
 
-	fmt.Println("committing", len(w.stateUpdates), "updates from", w.cubeWorkers, "workers", len(w.updates))
+	// fmt.Println("committing", len(w.stateUpdates), "updates from", len(w.cubes), "workers")
 
 	for _, u := range w.stateUpdates {
-		if u.turn != w.turn {
-			panic(errors.New("turn mismatch in update"))
-		}
-
 		k := u.pos.String()
 		w.currentState[k] = u.state
 
 		// spin up a cube on the spot, if it's the 0th turn
 		if u.turn == 0 {
-			spinups.Add(1)
-			go cube(w.ctx, u.pos, w.coordinateFactory(u.pos), u.state == activeConwayCube, w, &spinups)
-			w.cubeWorkers++
+			w.cubes = append(w.cubes, &cube{u.pos, w.coordinateFactory(u.pos), u.state == activeConwayCube})
 		}
 
 		// expand onto neighbouring coordinates
@@ -133,28 +64,27 @@ func (w *World) EndTurn() {
 		}
 	}
 
-	w.stateUpdates = []*Update{}
-
 	for k, u := range indirectUpdates {
 		if _, ok := w.currentState[k]; !ok {
-			spinups.Add(1)
-			go cube(w.ctx, u.pos, w.coordinateFactory(u.pos), false, w, &spinups)
+			w.cubes = append(w.cubes, &cube{u.pos, w.coordinateFactory(u.pos), u.state == activeConwayCube})
 			w.currentState[k] = inactiveConwayCube
-			w.cubeWorkers++
 		}
 	}
 
-	spinups.Wait()
-	fmt.Println("ended turn", w.turn, "with", w.cubeWorkers, "workers")
+	// fmt.Println(len(w.cubes), "at the end of turn", w.turn)
 	w.turn++
 }
 
+func (w *World) Update(pos Position, newState string) *Update {
+	return &Update{w.turn, pos, newState}
+}
+
 func (w *World) AlterStateAt(pos Position, newState string) {
-	w.updates <- &Update{w.turn, pos, newState}
+	w.stateUpdates = append(w.stateUpdates, w.Update(pos, newState))
 }
 
 func (w *World) StateAt(pos Position) string {
-	k := pos.String() // fmt.Sprintf("%d,%d,%d", x, y, z)
+	k := pos.String()
 
 	if s, ok := w.currentState[k]; ok {
 		return s

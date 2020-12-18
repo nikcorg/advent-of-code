@@ -1,52 +1,31 @@
 package s17
 
-import (
-	"context"
-	"sync"
-)
+type cube struct {
+	pos        Position
+	neighbours []Position
+	isactive   bool
+}
 
-func cube(ctx context.Context, pos Position, neighbours []Position, initialState bool, world *World, spinup *sync.WaitGroup) {
-	defer spinup.Done()
-
-	events := world.Events()
-	isactive := initialState
-
-	var (
-		evt *WorldEvent
-		ok  bool
-	)
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case evt, ok = <-events:
-				if !ok {
-					return
-				}
-			}
-
-			switch evt {
-			default:
-				activeNeighbours := 0
-				for _, n := range neighbours {
-					s := world.StateAt(n)
-					if s == activeConwayCube {
-						activeNeighbours++
-					}
-				}
-
-				if isactive && activeNeighbours != 2 && activeNeighbours != 3 {
-					isactive = false
-					world.AlterStateAt(pos, inactiveConwayCube)
-				} else if !isactive && activeNeighbours == 3 {
-					world.AlterStateAt(pos, activeConwayCube)
-					isactive = true
-				}
-
-				evt.Done()
-			}
+func (c *cube) Update(world *World) *Update {
+	activeNeighbours := 0
+	for _, n := range c.neighbours {
+		s := world.StateAt(n)
+		if s == activeConwayCube {
+			activeNeighbours++
 		}
-	}()
+
+		if activeNeighbours > 3 {
+			break
+		}
+	}
+
+	if c.isactive && activeNeighbours != 2 && activeNeighbours != 3 {
+		c.isactive = false
+		return world.Update(c.pos, inactiveConwayCube)
+	} else if !c.isactive && activeNeighbours == 3 {
+		c.isactive = true
+		return world.Update(c.pos, activeConwayCube)
+	}
+
+	return nil
 }

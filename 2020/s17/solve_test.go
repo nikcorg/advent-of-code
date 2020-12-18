@@ -29,9 +29,7 @@ func TestSolve(t *testing.T) {
 		{solver.SolveSecond, "solution: 848\n", input, 0},
 	}
 
-	for n, test := range tests {
-		t.Logf("------[ %d ]------", n+1)
-
+	for _, test := range tests {
 		inp := strings.NewReader(test.input)
 
 		assert.Nil(t, test.solve(inp))
