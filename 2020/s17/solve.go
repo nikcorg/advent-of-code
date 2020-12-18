@@ -53,6 +53,8 @@ func getSolver(part int) solver {
 	switch part {
 	case 1:
 		return solveFirst
+	case 2:
+		return solveSecond
 	}
 	panic(fmt.Errorf("invalid part %d", part))
 }
@@ -61,7 +63,7 @@ func solveFirst(ctx context.Context, init []string, side, maxCycles int) int {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	world := newWorld(ctx)
+	world := newWorld(ctx, surroundingXYZCoords)
 	z := 0
 
 	// set initial state
@@ -70,7 +72,7 @@ func solveFirst(ctx context.Context, init []string, side, maxCycles int) int {
 		y := n % (side * side) / side
 
 		if pos == activeConwayCube {
-			world.AlterStateAt(x, y, z, activeConwayCube)
+			world.AlterStateAt(Position{x, y, z}, activeConwayCube)
 		}
 	}
 
@@ -83,9 +85,40 @@ func solveFirst(ctx context.Context, init []string, side, maxCycles int) int {
 	return world.ActiveCubes()
 }
 
-func surroundingXYZCoords(sx, sy, sz int) [][]int {
+func solveSecond(ctx context.Context, init []string, side, maxCycles int) int {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	world := newWorld(ctx, surroundingXYZWCoords)
+	z := 0
+	w := 0
+
+	// set initial state
+	for n, pos := range init {
+		x := n % side
+		y := n % (side * side) / side
+
+		if pos == activeConwayCube {
+			world.AlterStateAt(Position{x, y, z, w}, activeConwayCube)
+		}
+	}
+
+	world.EndTurn()
+
+	for n := 0; n < maxCycles; n++ {
+		world.NextTurn()
+	}
+
+	return world.ActiveCubes()
+}
+
+func surroundingXYZCoords(pos Position) []Position {
+	sx := pos[0]
+	sy := pos[1]
+	sz := pos[2]
+
 	n := 27
-	cs := make([][]int, 0, n-1) // 26 neighbours
+	cs := make([]Position, 0, n-1) // 26 neighbours
 	offs := -1
 
 	for i := 0; i < 27; i++ {
@@ -97,10 +130,42 @@ func surroundingXYZCoords(sx, sy, sz int) [][]int {
 			continue
 		}
 
-		cs = append(cs, []int{x, y, z})
+		cs = append(cs, Position{x, y, z})
 	}
 
 	return cs
+}
+
+func surroundingXYZWCoords(pos Position) []Position {
+	sw := pos[3]
+
+	xyz := surroundingXYZCoords(pos)
+	xyzw := []Position{}
+
+	for w := 0; w < 3; w++ {
+		for _, p := range xyz {
+			p = append(p, sw+(w-1))
+			xyzw = append(xyzw, p)
+		}
+	}
+
+	sx := pos[0]
+	sy := pos[1]
+	sz := pos[2]
+	offs := -1
+
+	// Because XYZ omits the origin position, we need to explicitly
+	// inlude the two neighbouring coordinates on the W dimension
+	for i := 0; i < 3; i++ {
+		w := sw + i + offs
+		if w == sw {
+			continue
+		}
+
+		xyzw = append(xyzw, Position{sx, sy, sz, w})
+	}
+
+	return xyzw
 }
 
 func slurpInput(inp linestream.ReadOnlyLineChan) ([]string, int) {

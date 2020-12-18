@@ -11,9 +11,9 @@ const activeConwayCube = "#"
 const inactiveConwayCube = "."
 
 type Update struct {
-	turn    int
-	x, y, z int
-	state   string
+	turn  int
+	pos   Position
+	state string
 }
 
 type WorldEvent struct {
@@ -42,27 +42,28 @@ func (e *WorldEvent) Wait() {
 }
 
 type World struct {
-	started      bool
-	ctx          context.Context
-	turn         int
-	currentState map[string]string
-	stateUpdates []*Update
-	updates      chan *Update
-	stateMutex   sync.Mutex
-	events       *EventMuxxer
-	eventSource  chan *WorldEvent
-	cubeWorkers  int
-	turnWG       *WorldEvent
+	started           bool
+	ctx               context.Context
+	turn              int
+	currentState      map[string]string
+	stateUpdates      []*Update
+	updates           chan *Update
+	stateMutex        sync.Mutex
+	events            *EventMuxxer
+	eventSource       chan *WorldEvent
+	cubeWorkers       int
+	turnWG            *WorldEvent
+	coordinateFactory func(Position) []Position
 }
 
-func newWorld(ctx context.Context) *World {
+func newWorld(ctx context.Context, cf func(Position) []Position) *World {
 	w := World{}
 	w.ctx = ctx
 	w.currentState = make(map[string]string)
 	w.eventSource = make(chan *WorldEvent)
 	w.events = NewMuxxer(w.eventSource)
-	w.updates = make(chan *Update, 0)
-
+	w.updates = make(chan *Update, 1)
+	w.coordinateFactory = cf
 	go w.receiveUpdates()
 
 	return &w
@@ -106,28 +107,29 @@ func (w *World) EndTurn() {
 	defer w.stateMutex.Unlock()
 
 	spinups := sync.WaitGroup{}
-
 	indirectUpdates := map[string]*Update{} // using a map with `x,y,z` as key, as it will avoid duplicate updates
+
+	fmt.Println("committing", len(w.stateUpdates), "updates from", w.cubeWorkers, "workers", len(w.updates))
 
 	for _, u := range w.stateUpdates {
 		if u.turn != w.turn {
 			panic(errors.New("turn mismatch in update"))
 		}
 
-		k := fmt.Sprintf("%d,%d,%d", u.x, u.y, u.z)
+		k := u.pos.String()
 		w.currentState[k] = u.state
 
 		// spin up a cube on the spot, if it's the 0th turn
 		if u.turn == 0 {
-			go cube(w.ctx, u.x, u.y, u.z, u.state == activeConwayCube, w, &spinups)
 			spinups.Add(1)
+			go cube(w.ctx, u.pos, w.coordinateFactory(u.pos), u.state == activeConwayCube, w, &spinups)
 			w.cubeWorkers++
 		}
 
 		// expand onto neighbouring coordinates
-		for _, c := range surroundingXYZCoords(u.x, u.y, u.z) {
-			k := fmt.Sprintf("%d,%d,%d", c[0], c[1], c[2])
-			indirectUpdates[k] = &Update{w.turn, c[0], c[1], c[2], inactiveConwayCube}
+		for _, c := range w.coordinateFactory(u.pos) {
+			k := c.String()
+			indirectUpdates[k] = &Update{w.turn, c, inactiveConwayCube}
 		}
 	}
 
@@ -135,23 +137,24 @@ func (w *World) EndTurn() {
 
 	for k, u := range indirectUpdates {
 		if _, ok := w.currentState[k]; !ok {
-			go cube(w.ctx, u.x, u.y, u.z, false, w, &spinups)
 			spinups.Add(1)
+			go cube(w.ctx, u.pos, w.coordinateFactory(u.pos), false, w, &spinups)
 			w.currentState[k] = inactiveConwayCube
 			w.cubeWorkers++
 		}
 	}
 
 	spinups.Wait()
+	fmt.Println("ended turn", w.turn, "with", w.cubeWorkers, "workers")
 	w.turn++
 }
 
-func (w *World) AlterStateAt(x, y, z int, newState string) {
-	w.updates <- &Update{w.turn, x, y, z, newState}
+func (w *World) AlterStateAt(pos Position, newState string) {
+	w.updates <- &Update{w.turn, pos, newState}
 }
 
-func (w *World) StateAt(x, y, z int) string {
-	k := fmt.Sprintf("%d,%d,%d", x, y, z)
+func (w *World) StateAt(pos Position) string {
+	k := pos.String() // fmt.Sprintf("%d,%d,%d", x, y, z)
 
 	if s, ok := w.currentState[k]; ok {
 		return s

@@ -26,10 +26,12 @@ func TestSolve(t *testing.T) {
 		offset   uint64
 	}{
 		{solver.SolveFirst, "solution: 112\n", input, 0},
-		// {solver.SolveSecond, "solution: 1\n", input2, 0},
+		{solver.SolveSecond, "solution: 848\n", input, 0},
 	}
 
-	for _, test := range tests {
+	for n, test := range tests {
+		t.Logf("------[ %d ]------", n+1)
+
 		inp := strings.NewReader(test.input)
 
 		assert.Nil(t, test.solve(inp))

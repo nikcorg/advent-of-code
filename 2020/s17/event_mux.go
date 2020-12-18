@@ -2,6 +2,7 @@ package s17
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -59,6 +60,7 @@ func (m *EventMuxxer) bcast(v *WorldEvent) {
 	m.chansMutex.Lock()
 	defer m.chansMutex.Unlock()
 
+	fmt.Println("broadcasting to", len(m.chans), "receivers")
 	for _, c := range m.chans {
 		c <- v
 	}

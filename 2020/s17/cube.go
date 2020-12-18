@@ -5,10 +5,9 @@ import (
 	"sync"
 )
 
-func cube(ctx context.Context, x, y, z int, initialState bool, world *World, spinup *sync.WaitGroup) {
+func cube(ctx context.Context, pos Position, neighbours []Position, initialState bool, world *World, spinup *sync.WaitGroup) {
 	defer spinup.Done()
 
-	neighbours := surroundingXYZCoords(x, y, z)
 	events := world.Events()
 	isactive := initialState
 
@@ -32,7 +31,7 @@ func cube(ctx context.Context, x, y, z int, initialState bool, world *World, spi
 			default:
 				activeNeighbours := 0
 				for _, n := range neighbours {
-					s := world.StateAt(n[0], n[1], n[2])
+					s := world.StateAt(n)
 					if s == activeConwayCube {
 						activeNeighbours++
 					}
@@ -40,9 +39,9 @@ func cube(ctx context.Context, x, y, z int, initialState bool, world *World, spi
 
 				if isactive && activeNeighbours != 2 && activeNeighbours != 3 {
 					isactive = false
-					world.AlterStateAt(x, y, z, inactiveConwayCube)
+					world.AlterStateAt(pos, inactiveConwayCube)
 				} else if !isactive && activeNeighbours == 3 {
-					world.AlterStateAt(x, y, z, activeConwayCube)
+					world.AlterStateAt(pos, activeConwayCube)
 					isactive = true
 				}
 
