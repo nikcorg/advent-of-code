@@ -35,25 +35,26 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 	lineInput := make(linestream.LineChan, bufSize)
 	linestream.New(s.ctx, bufio.NewReader(inp), lineInput)
 
-	solve := getSolver(part)
-	solution := solve(linestream.SkipEmpty(lineInput))
+	solution := solve(linestream.SkipEmpty(lineInput), getSolver(part))
 
 	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
 
-type solver func(linestream.ReadOnlyLineChan) int
+type solver func([]*token) int
 
 func getSolver(part int) solver {
 	switch part {
 	case 1:
-		return solveFirst
+		return evalFirst
+	case 2:
+		return evalSecond
 	}
 	panic(fmt.Errorf("invalid part %d", part))
 }
 
-func solveFirst(inp linestream.ReadOnlyLineChan) int {
+func solve(inp linestream.ReadOnlyLineChan, eval solver) int {
 	total := 0
 	for line := range inp {
 		tokens := tokenise(strings.ReplaceAll(line.Content(), " ", ""))
@@ -123,7 +124,7 @@ func tokenise(line string) []*token {
 	return tokens
 }
 
-func eval(toks []*token) int {
+func evalFirst(toks []*token) int {
 	s := 0
 	stacks := [][]*token{{}}
 
@@ -134,7 +135,7 @@ func eval(toks []*token) int {
 			s++
 			stacks = append(stacks, []*token{})
 		case rhb:
-			tok = &token{val, eval(stacks[s])}
+			tok = &token{val, evalFirst(stacks[s])}
 			stacks = stacks[0 : len(stacks)-1]
 			s--
 			fallthrough
@@ -164,7 +165,76 @@ func eval(toks []*token) int {
 			total += rhs.intVal
 		case mul:
 			total *= rhs.intVal
+		}
+	}
 
+	return total
+}
+
+func evalSecond(toks []*token) int {
+	s := 0
+	stacks := [][]*token{{}}
+
+	// eval parenthesised expressions
+	for n := 0; n < len(toks); n++ {
+		tok := toks[n]
+		switch tok.kind {
+		case lhb:
+			s++
+			stacks = append(stacks, []*token{})
+		case rhb:
+			tok = &token{val, evalSecond(stacks[s])}
+			stacks = stacks[0 : len(stacks)-1]
+			s--
+			fallthrough
+		default:
+			stacks[s] = append(stacks[s], tok)
+		}
+	}
+
+	if len(stacks) > 1 {
+		panic(fmt.Errorf("expected a flat stack: %+v", stacks))
+	}
+
+	stack := stacks[0]
+
+	if len(stack) == 0 {
+		return 0
+	}
+
+	// reduce additions to values
+	end := len(stack)
+
+	for n := 2; n < end; {
+		lhs := stack[n-2]
+		op := stack[n-1]
+		rhs := stack[n]
+
+		switch op.kind {
+		case add:
+			// omstart!
+			stack = append(append(stack[0:n-2], &token{val, lhs.intVal + rhs.intVal}), stack[n+1:]...)
+			end = len(stack)
+			n = 2
+		default:
+			n += 2
+		}
+	}
+
+	if len(stack) == 1 {
+		return stack[0].intVal
+	}
+
+	// multiplications
+	total := stack[0].intVal
+	for n := 2; n < len(stack); n += 2 {
+		op := stack[n-1]
+		lhs := stack[n]
+		switch op.kind {
+		case mul:
+			total *= lhs.intVal
+		default:
+			panic(fmt.Errorf("expected %+v to be mul", op))
 		}
 	}
 
