@@ -3,6 +3,7 @@ package s18
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -15,33 +16,28 @@ func TestSolve(t *testing.T) {
 	solver := New(context.Background(), out)
 
 	tests := []struct {
-		solve    func(io.Reader) error
-		expected string
+		// solve
+		expected []int
 		input    string
 	}{
-		{solver.SolveFirst, "solution: 71\n", "1 + 2 * 3 + 4 * 5 + 6"},
-		{solver.SolveFirst, "solution: 51\n", "1 + (2 * 3) + (4 * (5 + 6))"},
-		{solver.SolveFirst, "solution: 26\n", "2 * 3 + (4 * 5)"},
-		{solver.SolveFirst, "solution: 437\n", "5 + (8 * 3 + 9 + 3 * 4 * 3)"},
-		{solver.SolveFirst, "solution: 12240\n", "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"},
-		{solver.SolveFirst, "solution: 13632\n", "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"},
-
-		{solver.SolveSecond, "solution: 231\n", "1 + 2 * 3 + 4 * 5 + 6"},
-		{solver.SolveSecond, "solution: 51\n", "1 + (2 * 3) + (4 * (5 + 6))"},
-		{solver.SolveSecond, "solution: 46\n", "2 * 3 + (4 * 5)"},
-		{solver.SolveSecond, "solution: 1445\n", "5 + (8 * 3 + 9 + 3 * 4 * 3)"},
-		{solver.SolveSecond, "solution: 669060\n", "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"},
-		{solver.SolveSecond, "solution: 23340\n", "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"},
+		{[]int{71, 231}, "1 + 2 * 3 + 4 * 5 + 6"},
+		{[]int{51, 51}, "1 + (2 * 3) + (4 * (5 + 6))"},
+		{[]int{26, 46}, "2 * 3 + (4 * 5)"},
+		{[]int{437, 1445}, "5 + (8 * 3 + 9 + 3 * 4 * 3)"},
+		{[]int{12240, 669060}, "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"},
+		{[]int{13632, 23340}, "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"},
 	}
 
+	solvers := []func(io.Reader) error{solver.SolveFirst, solver.SolveSecond}
+
 	for _, test := range tests {
-		inp := strings.NewReader(test.input)
+		for n, solve := range solvers {
+			inp := strings.NewReader(test.input)
 
-		t.Logf("expression: %s", test.input)
+			assert.Nil(t, solve(inp))
+			assert.Equal(t, fmt.Sprintf("solution: %d\n", test.expected[n]), out.String())
 
-		assert.Nil(t, test.solve(inp))
-		assert.Equal(t, test.expected, out.String())
-
-		out.Reset()
+			out.Reset()
+		}
 	}
 }
