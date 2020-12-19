@@ -128,6 +128,7 @@ func evalFirst(toks []*token) int {
 	s := 0
 	stacks := [][]*token{{}}
 
+	// eval parenthesised expressions
 	for n := 0; n < len(toks); n++ {
 		tok := toks[n]
 		switch tok.kind {
@@ -154,8 +155,8 @@ func evalFirst(toks []*token) int {
 		return 0
 	}
 
+	// eval the flat stack from left to right
 	total := stack[0].intVal
-
 	for n := 2; n < len(stack); n += 2 {
 		op := stack[n-1]
 		rhs := stack[n]
@@ -204,7 +205,6 @@ func evalSecond(toks []*token) int {
 
 	// reduce additions to values
 	end := len(stack)
-
 	for n := 2; n < end; {
 		lhs := stack[n-2]
 		op := stack[n-1]
@@ -225,7 +225,7 @@ func evalSecond(toks []*token) int {
 		return stack[0].intVal
 	}
 
-	// multiplications
+	// eval multiplications
 	total := stack[0].intVal
 	for n := 2; n < len(stack); n += 2 {
 		op := stack[n-1]
