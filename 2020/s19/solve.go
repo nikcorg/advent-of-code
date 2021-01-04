@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	"github.com/nikcorg/aoc2020/utils"
@@ -63,17 +62,11 @@ func getSolver(part int) solver {
 
 func solveFirst(root *Node, inp linestream.ReadOnlyLineChan) int {
 	matches := 0
-	reSource := fmt.Sprintf("^%s$", root.String())
-	re := regexp.MustCompile(reSource)
-
-	fmt.Println("re", reSource)
 
 	for line := range inp {
-		if re.MatchString(line.Content()) {
-			fmt.Println("matches", line.Content())
+
+		if matchLen := root.Matches(line.Content()); matchLen == len(line.Content()) {
 			matches++
-		} else {
-			fmt.Println("no match", line.Content())
 		}
 	}
 
@@ -93,8 +86,6 @@ type Mode int
 
 func (m *Mode) String() string {
 	switch *m {
-	case eol:
-		return "eol"
 	case matchAny:
 		return "any"
 	case matchAll:
@@ -109,7 +100,6 @@ const (
 	matchAny Mode = iota + 1
 	matchAll
 	literal
-	eol
 )
 
 type Node struct {
@@ -119,39 +109,38 @@ type Node struct {
 	value    string
 }
 
-func (n *Node) Matches(s string) bool {
-	var didMatch bool
+func (n *Node) Matches(s string) int {
+	var matchedLen int
 	switch n.mode {
-	case eol:
-		didMatch = s == ""
 	case matchAny:
-		didMatch = false
 		for _, nn := range n.nextNode {
-			if nn.Matches(s) {
-				didMatch = true
+			ruleMatches := nn.Matches(s)
+			if ruleMatches > 0 {
+				matchedLen = ruleMatches
 				break
 			}
 		}
 	case matchAll:
-		didMatch = true
-		for i := 0; didMatch && i < len(n.nextNode); i++ {
-			didMatch = didMatch && n.nextNode[i].Matches(s[i:])
+		matchesAcc := 0
+		for i := 0; i < len(n.nextNode); i++ {
+			ruleMatches := n.nextNode[i].Matches(s[matchesAcc:])
+			if ruleMatches == 0 {
+				return 0
+			}
+			matchesAcc += ruleMatches
 		}
+		matchedLen += matchesAcc
 	case literal:
-		didMatch = string(s[0]) == n.value
+		if string(s[0]) == n.value {
+			matchedLen = 1
+		}
 	}
 
-	fmt.Printf("match: %v to %v: %v\n", s, n, didMatch)
-
-	return didMatch
-
-	// panic(errors.New("invalid node"))
+	return matchedLen
 }
 
 func (n *Node) String() string {
 	switch n.mode {
-	case eol:
-		return "$"
 	case matchAny:
 		alts := []string{}
 		for _, nn := range n.nextNode {
@@ -200,9 +189,7 @@ func constructRuleTree(id int, rule string, rules map[int]string) *Node {
 	node := &Node{}
 	node.id = id
 
-	if rule == "" {
-		node.mode = eol
-	} else if rule[0] == '"' {
+	if rule[0] == '"' {
 		// literal node
 		node.mode = literal
 		node.value = string(rule[1])

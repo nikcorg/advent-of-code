@@ -35,7 +35,7 @@ aaaabbb
 		offset   uint64
 	}{
 		{solver.SolveFirst, "solution: 2\n", input, 0},
-		{solver.SolveSecond, "solution: 848\n", input, 0},
+		// {solver.SolveSecond, "solution: 848\n", input, 0},
 	}
 
 	for _, test := range tests {
