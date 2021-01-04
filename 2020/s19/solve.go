@@ -65,7 +65,6 @@ func solveFirst(rules map[int]string, inp linestream.ReadOnlyLineChan) int {
 
 	root := constructRuleTree(0, rules[0], rules)
 	for line := range inp {
-
 		if matchLen := root.Matches(line.Content()); matchLen == len(line.Content()) {
 			matches++
 		}
