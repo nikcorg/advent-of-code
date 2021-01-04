@@ -39,16 +39,16 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 	lineInput := make(linestream.LineChan, bufSize)
 	linestream.New(s.ctx, bufio.NewReader(inp), lineInput)
 
-	root := parseRules(lineInput, s.ruleOverrides)
+	rules := parseRules(lineInput, s.ruleOverrides)
 	solve := getSolver(part)
-	solution := solve(root, linestream.SkipEmpty(lineInput))
+	solution := solve(rules, linestream.SkipEmpty(lineInput))
 
 	io.WriteString(s.out, fmt.Sprintf("solution: %d\n", solution))
 
 	return nil
 }
 
-type solver func(*Node, linestream.ReadOnlyLineChan) int
+type solver func(map[int]string, linestream.ReadOnlyLineChan) int
 
 func getSolver(part int) solver {
 	switch part {
@@ -60,9 +60,10 @@ func getSolver(part int) solver {
 	panic(fmt.Sprintf("invalid part %d", part))
 }
 
-func solveFirst(root *Node, inp linestream.ReadOnlyLineChan) int {
+func solveFirst(rules map[int]string, inp linestream.ReadOnlyLineChan) int {
 	matches := 0
 
+	root := constructRuleTree(0, rules[0], rules)
 	for line := range inp {
 
 		if matchLen := root.Matches(line.Content()); matchLen == len(line.Content()) {
@@ -160,7 +161,7 @@ func (n *Node) String() string {
 	return fmt.Sprintf("Node(id:%d, mode:%s)", n.id, n.mode.String())
 }
 
-func parseRules(inp linestream.ReadOnlyLineChan, overrides map[int]string) *Node {
+func parseRules(inp linestream.ReadOnlyLineChan, overrides map[int]string) map[int]string {
 	rules := map[int]string{}
 
 	for line := range inp {
@@ -182,7 +183,7 @@ func parseRules(inp linestream.ReadOnlyLineChan, overrides map[int]string) *Node
 		}
 	}
 
-	return constructRuleTree(0, rules[0], rules)
+	return rules
 }
 
 func constructRuleTree(id int, rule string, rules map[int]string) *Node {
