@@ -29,8 +29,10 @@ func (s *Solver) SolveFirst(inp io.Reader) error {
 
 func (s *Solver) SolveSecond(inp io.Reader) error {
 	s.ruleOverrides = map[int]string{
-		8:  "42 | 42 8",
-		11: "42 31 | 42 11 31",
+		8:  "42 | 42 42 | 42 42 42 | 42 42 42 42 | 42 42 42 42 42 | 42 42 42 42 42 42 | 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 42 42 42 42 | 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42",
+		11: "42 31 | 42 42 31 31 | 42 42 42 31 31 31 | 42 42 42 42 31 31 31 31 | 42 42 42 42 42 31 31 31 31 31 | 42 42 42 42 42 42 31 31 31 31 31 31 | 42 42 42 42 42 42 42 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 31 31 31 31 | 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31",
+		// 8:  "42 | 42 8
+		// 11: "42 31 | 42 11 31
 	}
 	return s.Solve(2, inp)
 }
@@ -55,7 +57,7 @@ func getSolver(part int) solver {
 	case 1:
 		return solveFirst
 	case 2:
-		return solveFirst
+		return solveSecond
 	}
 	panic(fmt.Sprintf("invalid part %d", part))
 }
@@ -73,14 +75,21 @@ func solveFirst(rules map[int]string, inp linestream.ReadOnlyLineChan) int {
 	return matches
 }
 
-/*
-0: 4 1 5
-1: 2 3 | 3 2
-2: 4 4 | 5 5
-3: 4 5 | 5 4
-4: "a"
-5: "b"
-*/
+func solveSecond(rules map[int]string, inp linestream.ReadOnlyLineChan) int {
+	matches := 0
+
+	for line := range inp {
+		fmt.Println("--------[ matching:", line.Content(), "]--------")
+		if matchLen, err := matchString(line.Content(), 0, rules); err == nil {
+			fmt.Println("match", matchLen, len(line.Content()))
+			matches++
+		} else {
+			fmt.Println("no match", line.Content(), err)
+		}
+	}
+
+	return matches
+}
 
 type Mode int
 
@@ -111,6 +120,11 @@ type Node struct {
 
 func (n *Node) Matches(s string) int {
 	var matchedLen int
+
+	if len(s) == 0 {
+		return 0
+	}
+
 	switch n.mode {
 	case matchAny:
 		for _, nn := range n.nextNode {
@@ -214,4 +228,91 @@ func constructRuleTree(id int, rule string, rules map[int]string) *Node {
 	}
 
 	return node
+}
+
+// func matchString(s string, ruleID int, rules map[int]string) (int, error) {
+// 	matchedLen := 0
+
+// 	rule := rules[ruleID]
+
+// 	if len(s) == 0 {
+// 		return 0, nil
+// 	}
+
+// 	fmt.Print(ruleID, "=>")
+
+// 	if rule[0] == '"' {
+// 		// literal node
+// 		if rule[1] == s[0] {
+// 			matchedLen = 1
+// 		} else {
+// 			return 0, errors.New("no match for literal")
+// 		}
+// 	} else if paths := strings.Split(rule, " | "); len(paths) > 1 {
+// 		// alternate paths = matchAny
+// 		var pathError error
+
+// 		for _, path := range paths {
+// 			pathError = nil
+// 			matchedLenAcc := 0
+
+// 			ruleIds := strings.Split(path, " ")
+// 			for _, nextRule := range ruleIds {
+// 				nextRuleID := utils.MustAtoi(nextRule)
+
+// 				// Cyclical rule
+// 				// This is tricky, because we need to match as many times as possible, but not
+// 				// so much that it prevents matching any remaining rules. Essentially this needs
+// 				// to for each match, check if the ruleset can match the remainder, and keep the
+// 				// longest match that satisfies
+// 				if nextRuleID == ruleID {
+
+// 				}
+
+// 				nextRuleMatch, err := matchString(s[matchedLenAcc:], nextRuleID, rules)
+// 				if err != nil {
+// 					pathError = err
+// 					break
+// 				} else if nextRuleMatch == 0 {
+// 					pathError = errors.New("no match in matchAny")
+// 					break
+// 				}
+// 				matchedLenAcc += nextRuleMatch
+// 			}
+
+// 			if pathError == nil {
+// 				matchedLen += matchedLenAcc
+// 				break
+// 			}
+// 		}
+
+// 		if pathError != nil {
+// 			return 0, pathError
+// 		}
+// 	} else if ids := strings.Split(rule, " "); len(ids) > 0 {
+// 		// list of rule ids == matchAll
+// 		matchedLenAcc := 0
+// 		fmt.Println("matchAll", rule)
+// 		for _, nextRule := range ids {
+// 			nextRuleID := utils.MustAtoi(nextRule)
+// 			nextRuleMatch, err := matchString(s[matchedLenAcc:], nextRuleID, rules)
+// 			if err != nil {
+// 				return 0, err
+// 			} else if nextRuleMatch == 0 {
+// 				return 0, errors.New("no match in matchAll")
+// 			}
+// 			matchedLenAcc += nextRuleMatch
+// 		}
+// 		matchedLen += matchedLenAcc
+// 	} else {
+// 		fmt.Println("no idea", rule)
+// 	}
+
+// 	return matchedLen, nil
+// }
+
+func matchString(s string, startRuleID int, rules map[int]string) (int, error) {
+	startRule := rules[startRuleID]
+
+	return 0, nil
 }
