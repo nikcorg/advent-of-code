@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+//go:generate stringer -type=tileKind
 type tileKind int
 
 const (

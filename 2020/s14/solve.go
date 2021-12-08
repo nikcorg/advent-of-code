@@ -48,6 +48,7 @@ func (s *Solver) Solve(part int, inp io.Reader) error {
 	return nil
 }
 
+//go:generate stringer -type=Cmd
 type Cmd int
 
 const (

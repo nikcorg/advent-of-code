@@ -1,5 +1,7 @@
 package s12
 
+//go:generate stringer -type=Command
+
 import (
 	"fmt"
 )
