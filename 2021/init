@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+set -eu
+
+if (( $# != 1 )); then
+  echo "error: expected exactly one argument" >&2
+  exit 1
+fi
+
+dirname="$(printf "%03d" "$1")"
+modname="$(printf "nikc.org/aoc2021/%02d" "$1")"
+
+if [[ -d "$dirname" ]]; then
+  echo "error: directory $dirname already exists" >&2
+  exit 1
+fi
+
+mkdir "$dirname" && cd "$_" && go mod init "$modname" && touch input.txt && { \
+cat > main.go <<'EOT'
+package main
+
+import (
+  _ "embed"
+  "errors"
+  "fmt"
+  "io"
+  "os"
+)
+
+var (
+  //go:embed input.txt
+  input string
+)
+
+func main() {
+  if err := mainWithErr(); err != nil {
+    io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
+  }
+}
+
+func mainWithErr() error {
+  return nil
+}
+
+func parseInput(raw string) ([]interface{}, error) {
+  return nil, errors.New("not implemented")
+}
+EOT
+} && { cat > main_test.go <<'EOT'
+package main
+
+import (
+  "testing"
+  "github.com/stretchr/testify/assert"
+)
+
+func TestMainWithErr(t *testing.T) {
+  assert.NoError(t, mainWithErr())
+}
+
+const testInput string = ``
+
+func TestParseInput(t *testing.T) {
+  _, err := parseInput(testInput)
+  assert.NoError(t, err)
+}
+EOT
+} && go fmt ./*.go && go mod tidy
