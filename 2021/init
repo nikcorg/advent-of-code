@@ -33,17 +33,44 @@ var (
 )
 
 func main() {
-  if err := mainWithErr(); err != nil {
+  if err := mainWithErr(input); err != nil {
     io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
   }
 }
 
-func mainWithErr() error {
+func mainWithErr(input string) error {
+  parsed, err := parseInput(input)
+  if err != nil {
+    return err
+  }
+
+  if result, err := solveFirst(parsed); err != nil {
+    return err
+  } else {
+    io.WriteString(os.Stdout, fmt.Sprintf("solution 1: %d\n", result))
+  }
+
+  if result, err := solveSecond(parsed); err != nil {
+    return err
+  } else {
+    io.WriteString(os.Stdout, fmt.Sprintf("solution 2: %d\n", result))
+  }
+
   return nil
 }
 
-func parseInput(raw string) ([]interface{}, error) {
+type puzzleInput interface{}
+
+func parseInput(raw string) (puzzleInput, error) {
   return nil, errors.New("not implemented")
+}
+
+func solveFirst(input puzzleInput) (int, error) {
+  return 0, errors.New("not implemented")
+}
+
+func solveSecond(input puzzleInput) (int, error) {
+  return 0, errors.New("not implemented")
 }
 EOT
 } && { cat > main_test.go <<'EOT'
@@ -54,15 +81,35 @@ import (
   "github.com/stretchr/testify/assert"
 )
 
-func TestMainWithErr(t *testing.T) {
-  assert.NoError(t, mainWithErr())
-}
-
 const testInput string = ``
+
+func TestMainWithErr(t *testing.T) {
+  assert.NoError(t, mainWithErr(testInput))
+}
 
 func TestParseInput(t *testing.T) {
   _, err := parseInput(testInput)
   assert.NoError(t, err)
+}
+
+func TestSolveFirst(t *testing.T) {
+  expected := 0
+
+  parsed, _ := parseInput(testInput)
+
+  result, err := solveFirst(parsed)
+  assert.NoError(t, err)
+  assert.Equal(t, expected, result)
+}
+
+func TestSolveSecond(t *testing.T) {
+  expected := 0
+
+  parsed, _ := parseInput(testInput)
+
+  result, err := solveFirst(parsed)
+  assert.NoError(t, err)
+  assert.Equal(t, expected, result)
 }
 EOT
 } && go fmt ./*.go && go mod tidy
