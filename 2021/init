@@ -107,7 +107,7 @@ func TestSolveSecond(t *testing.T) {
 
   parsed, _ := parseInput(testInput)
 
-  result, err := solveFirst(parsed)
+  result, err := solveSecond(parsed)
   assert.NoError(t, err)
   assert.Equal(t, expected, result)
 }
