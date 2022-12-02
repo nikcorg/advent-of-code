@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+set -eu
+
+if (( $# != 1 )); then
+  echo "error: expected exactly one argument" >&2
+  exit 1
+fi
+
+dirname="$(printf "%03d" "$1")"
+modname="$(printf "nikc.org/aoc2021/%02d" "$1")"
+
+if [[ -d "$dirname" ]]; then
+  echo "error: directory $dirname already exists" >&2
+  exit 1
+fi
+
+mkdir "$dirname" && cd "$_" && go mod init "$modname" && touch input.txt && { \
+cat > main.go <<'EOT'
+package main
+
+import (
+  _ "embed"
+  "errors"
+  "fmt"
+  "io"
+  "os"
+)
+
+var (
+  //go:embed input.txt
+  input string
+)
+
+func main() {
+  if err := mainWithErr(input); err != nil {
+    io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
+  }
+}
+
+func mainWithErr(input string) error {
+  parsed, err := parseInput(input)
+  if err != nil {
+    return err
+  }
+
+  if result, err := solveFirst(parsed); err != nil {
+    return err
+  } else {
+    io.WriteString(os.Stdout, fmt.Sprintf("solution 1: %d\n", result))
+  }
+
+  if result, err := solveSecond(parsed); err != nil {
+    return err
+  } else {
+    io.WriteString(os.Stdout, fmt.Sprintf("solution 2: %d\n", result))
+  }
+
+  return nil
+}
+
+type puzzleInput interface{}
+
+func parseInput(raw string) (puzzleInput, error) {
+  return nil, errors.New("not implemented")
+}
+
+func solveFirst(input puzzleInput) (int, error) {
+  return 0, errors.New("not implemented")
+}
+
+func solveSecond(input puzzleInput) (int, error) {
+  return 0, errors.New("not implemented")
+}
+EOT
+} && { cat > main_test.go <<'EOT'
+package main
+
+import (
+  "testing"
+  "github.com/stretchr/testify/assert"
+)
+
+const testInput string = ``
+
+func TestMainWithErr(t *testing.T) {
+  assert.NoError(t, mainWithErr(testInput))
+}
+
+func TestParseInput(t *testing.T) {
+  _, err := parseInput(testInput)
+  assert.NoError(t, err)
+}
+
+func TestSolveFirst(t *testing.T) {
+  expected := 0
+
+  parsed, _ := parseInput(testInput)
+
+  result, err := solveFirst(parsed)
+  assert.NoError(t, err)
+  assert.Equal(t, expected, result)
+}
+
+func TestSolveSecond(t *testing.T) {
+  expected := 0
+
+  parsed, _ := parseInput(testInput)
+
+  result, err := solveSecond(parsed)
+  assert.NoError(t, err)
+  assert.Equal(t, expected, result)
+}
+EOT
+} && go fmt ./*.go && go mod tidy
