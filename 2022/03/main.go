@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"nikc.org/aoc2022/03/set"
+	"nikc.org/aoc2022/util/set"
 )
 
 var (
