@@ -152,6 +152,14 @@ func scanFS(s *bufio.Scanner) (map[string]uint, uint, error) {
 
 			// Everything is below the root
 			sizes[""] += uint(size)
+
+			// This is wasteful - we're iterating over all parents
+			// on each file, but it saves us some complexity. An
+			// optimised version would update the parent nodes once
+			// on the end of a listing, but we'd also need to keep
+			// track whether we'd already visited (and listed) this
+			// directory. Essentially, do a proper tree walk, or
+			// waste a few CPU cycles.
 			dirs.Each(func(d string) {
 				sizes[d] += uint(size)
 			})
