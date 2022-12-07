@@ -35,3 +35,13 @@ func (s *Stack[T]) Peek() T {
 	}
 	return x
 }
+
+func (s *Stack[T]) Clear() {
+	s.stack = []T{}
+}
+
+func (s *Stack[T]) Each(f func(T)) {
+	for _, v := range s.stack {
+		f(v)
+	}
+}
