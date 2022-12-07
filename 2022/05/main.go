@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"nikc.org/aoc2022/05/stack"
 	"nikc.org/aoc2022/util"
+	"nikc.org/aoc2022/util/stack"
 )
 
 var (
