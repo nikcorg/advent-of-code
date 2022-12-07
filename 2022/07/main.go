@@ -94,8 +94,9 @@ func solveSecond(input string) (uint, error) {
 
 func scanFS(s *bufio.Scanner) (map[string]uint, uint, error) {
 	var (
-		sizes = make(map[string]uint)
-		dirs  = stack.New[string]()
+		sizes        = make(map[string]uint)
+		dirs         = stack.New[string]()
+		parseListing = true
 	)
 
 	s.Split(bufio.ScanLines)
@@ -112,6 +113,7 @@ func scanFS(s *bufio.Scanner) (map[string]uint, uint, error) {
 		case "dir": // no-op
 
 		case "$ c": // $ cd <dir>
+			parseListing = true
 			targetDir := line[5:]
 			switch targetDir {
 			case "/":
@@ -127,12 +129,21 @@ func scanFS(s *bufio.Scanner) (map[string]uint, uint, error) {
 			}
 
 		case "$ l": // $ ls
-			// Reset the dir size when starting a listing. This is
-			// a potential optimisation (skip relisting an already
-			// listed dir), but I don't care about microseconds.
+			// If we've already listed the dir once, there's no
+			// need to do it again
+			if _, ok := sizes[dirs.Peek()]; ok {
+				parseListing = false
+				continue
+			}
+
+			parseListing = true
 			sizes[dirs.Peek()] = 0
 
 		default:
+			if !parseListing {
+				continue
+			}
+
 			parts := strings.SplitN(line, " ", 2)
 			size, err := strconv.Atoi(parts[0])
 			if err != nil {
