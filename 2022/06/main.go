@@ -69,7 +69,7 @@ func solveSecond(d []byte) (int, error) {
 func findPacketBoundary(size int, d []byte) (int, error) {
 	if len(d) >= size {
 		for n := 0; n < len(d)-size; n++ {
-			if set.New(d[n:n+size]).Size() == size {
+			if set.New(d[n:n+size]...).Size() == size {
 				return n + size, nil
 			}
 		}

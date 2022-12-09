@@ -120,16 +120,11 @@ func priority(ch byte) int {
 }
 
 func overlap(left, right string) string {
-	o, l, r := "", set.New([]byte(left)), set.New([]byte(right))
+	o := ""
+	i := set.New([]byte(left)...).Intersection(set.New([]byte(right)...))
 
-	if r.Size() > l.Size() {
-		l, r = r, l
-	}
-
-	for x := range l {
-		if _, ok := r[byte(x)]; ok {
-			o += string(x)
-		}
+	for x := range i {
+		o += string(x)
 	}
 
 	return o
