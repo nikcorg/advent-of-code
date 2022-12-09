@@ -97,7 +97,7 @@ func solveSecond(i string) (string, error) {
 	return r, nil
 }
 
-func parseStacks(scanner *bufio.Scanner) []stack.Stack[byte] {
+func parseStacks(scanner *bufio.Scanner) []*stack.Stack[byte] {
 	b := []string{}
 
 	for scanner.Scan() {
@@ -111,7 +111,7 @@ func parseStacks(scanner *bufio.Scanner) []stack.Stack[byte] {
 	stacksLine := b[len(b)-1]
 	n := len(regexp.MustCompile(`\d+`).FindAllString(stacksLine, -1))
 
-	stacks := make([]stack.Stack[byte], n)
+	stacks := make([]*stack.Stack[byte], n)
 	for x := 0; x < n; x++ {
 		stacks[x] = stack.New[byte]()
 	}

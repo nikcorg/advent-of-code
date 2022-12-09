@@ -7,8 +7,8 @@ type Stack[T any] struct {
 	mut   sync.RWMutex
 }
 
-func New[T any]() Stack[T] {
-	return Stack[T]{}
+func New[T any]() *Stack[T] {
+	return &Stack[T]{}
 }
 
 func (s *Stack[T]) Size() int {
