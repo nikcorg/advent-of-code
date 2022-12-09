@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"nikc.org/aoc2022/util/stack"
 )
 
 type View struct {
@@ -47,28 +49,39 @@ func solveSecond(input string) (int, error) {
 	maxX := m.Height() - 1
 	maxY := m.Width() - 1
 
+	type probeSpec struct {
+		lookAt Point
+		points <-chan Point
+	}
+
+	jobs := stack.New[*probeSpec]()
+
 	for y := 0; y < maxY; y++ {
-		wg.Add(2)
-		go func(y int) {
-			defer wg.Done()
-			probeFromPoint(m, Point{-1, 0}, pointGenerator(Point{0, y}, Point{1, 0}, Point{maxX, y}), r)
-		}(y)
-		go func(y int) {
-			defer wg.Done()
-			probeFromPoint(m, Point{1, 0}, pointGenerator(Point{maxX, y}, Point{-1, 0}, Point{0, y}), r)
-		}(y)
+		jobs.Push(
+			&probeSpec{Point{-1, 0}, pointGenerator(Point{0, y}, Point{1, 0}, Point{maxX, y})},
+			&probeSpec{Point{1, 0}, pointGenerator(Point{maxX, y}, Point{-1, 0}, Point{0, y})},
+		)
 	}
 
 	for x := 0; x < maxX; x++ {
-		wg.Add(2)
-		go func(x int) {
+		jobs.Push(
+			&probeSpec{Point{0, -1}, pointGenerator(Point{x, 0}, Point{0, 1}, Point{x, maxY})},
+			&probeSpec{Point{0, 1}, pointGenerator(Point{x, maxY}, Point{0, -1}, Point{x, 0})},
+		)
+	}
+
+	for n := 0; n < 42; n++ {
+		wg.Add(1)
+		go func() {
 			defer wg.Done()
-			probeFromPoint(m, Point{0, -1}, pointGenerator(Point{x, 0}, Point{0, 1}, Point{x, maxY}), r)
-		}(x)
-		go func(x int) {
-			defer wg.Done()
-			probeFromPoint(m, Point{0, 1}, pointGenerator(Point{x, maxY}, Point{0, -1}, Point{x, 0}), r)
-		}(x)
+			for {
+				nextJob := jobs.Pop()
+				if nextJob == nil {
+					return
+				}
+				probeFromPoint(m, nextJob.lookAt, nextJob.points, r)
+			}
+		}()
 	}
 
 	wg.Wait()

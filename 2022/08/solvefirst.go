@@ -5,6 +5,8 @@ import (
 	"context"
 	"strings"
 	"sync"
+
+	"nikc.org/aoc2022/util/stack"
 )
 
 func solveFirst(input string) (int, error) {
@@ -31,28 +33,38 @@ func solveFirst(input string) (int, error) {
 	maxX := m.Width() - 1
 	maxY := m.Height() - 1
 
+	type job struct {
+		points <-chan Point
+	}
+
+	jobs := stack.New[*job]()
+
 	for y := 0; y < m.Height(); y++ {
-		wg.Add(2)
-		go func(y int) {
-			defer wg.Done()
-			probeFromEdge(m, pointGenerator(Point{0, y}, Point{1, 0}, Point{maxX, y}), rchan)
-		}(y)
-		go func(y int) {
-			defer wg.Done()
-			probeFromEdge(m, pointGenerator(Point{maxX, y}, Point{-1, 0}, Point{0, y}), rchan)
-		}(y)
+		jobs.Push(
+			&job{pointGenerator(Point{0, y}, Point{1, 0}, Point{maxX, y})},
+			&job{pointGenerator(Point{maxX, y}, Point{-1, 0}, Point{0, y})},
+		)
 	}
 
 	for x := 0; x < m.Width(); x++ {
-		wg.Add(2)
-		go func(x int) {
+		jobs.Push(
+			&job{pointGenerator(Point{x, 0}, Point{0, 1}, Point{x, maxY})},
+			&job{pointGenerator(Point{x, maxY}, Point{0, -1}, Point{x, 0})},
+		)
+	}
+
+	for n := 0; n < 42; n++ {
+		wg.Add(1)
+		go func() {
 			defer wg.Done()
-			probeFromEdge(m, pointGenerator(Point{x, 0}, Point{0, 1}, Point{x, maxY}), rchan)
-		}(x)
-		go func(x int) {
-			defer wg.Done()
-			probeFromEdge(m, pointGenerator(Point{x, maxY}, Point{0, -1}, Point{x, 0}), rchan)
-		}(x)
+			for {
+				job := jobs.Pop()
+				if job == nil {
+					return
+				}
+				probeFromEdge(m, job.points, rchan)
+			}
+		}()
 	}
 
 	wg.Wait()
