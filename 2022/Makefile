@@ -7,7 +7,7 @@ target = $(word 1, $@)
 
 .PHONY: test
 test:
-	go test $(foreach trg,$(TEST_TARGETS),$(trg)/...)
+	go test -vet=all $(foreach trg,$(TEST_TARGETS),$(trg)/...)
 
 .PHONY: test
 cover:
