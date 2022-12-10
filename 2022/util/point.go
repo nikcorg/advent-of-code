@@ -20,6 +20,14 @@ func (p Point) DistanceTo(q Point) float64 {
 	return math.Sqrt(math.Pow(distX, 2) + math.Pow(distY, 2))
 }
 
+func (p Point) DistanceX(q Point) int {
+	return p.X - q.X
+}
+
+func (p Point) DistanceY(q Point) int {
+	return p.Y - q.Y
+}
+
 func NewPoint(x, y int) Point {
 	return Point{x, y}
 }
