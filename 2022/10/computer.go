@@ -14,13 +14,12 @@ type Computer struct {
 	observer func(int)
 }
 
-func (c *Computer) OnTick(f func(int)) {
-	c.observer = f
+func NewComputer(program string) *Computer {
+	return &Computer{x: 1, clock: 1, program: bufio.NewScanner(strings.NewReader(program))}
 }
 
-func (c *Computer) Load(program string, init int) {
-	c.x = init
-	c.program = bufio.NewScanner(strings.NewReader(program))
+func (c *Computer) OnTick(f func(int)) {
+	c.observer = f
 }
 
 func (c *Computer) X() int {
