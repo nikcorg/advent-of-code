@@ -25,10 +25,10 @@ func (m *treeMap) Height() int {
 	return len(m.grid) / m.width
 }
 
-func (m *treeMap) At(p Point) (int, error) {
-	idx := p.y*m.width + p.x
+func (m *treeMap) At(p util.Point) (int, error) {
+	idx := p.Y*m.width + p.X
 
-	if p.x >= m.width || idx < 0 || idx >= len(m.grid) {
+	if p.X >= m.width || idx < 0 || idx >= len(m.grid) {
 		return 0, errOutOfBounds
 	}
 

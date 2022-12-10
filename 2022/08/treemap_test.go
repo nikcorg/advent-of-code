@@ -6,22 +6,23 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"nikc.org/aoc2022/util"
 )
 
 func TestTreeMap(t *testing.T) {
 	m := getTreeMap(bufio.NewScanner(strings.NewReader(testInput)))
 
 	testcases := []struct {
-		p          Point
+		p          util.Point
 		expected   int
 		shouldFail bool
 	}{
-		{Point{0, 0}, 3, false},
-		{Point{5, 0}, 0, true},
-		{Point{4, 0}, 3, false},
-		{Point{4, 4}, 0, false},
-		{Point{0, 4}, 3, false},
-		{Point{4, 5}, 0, true},
+		{util.Point{X: 0, Y: 0}, 3, false},
+		{util.Point{X: 5, Y: 0}, 0, true},
+		{util.Point{X: 4, Y: 0}, 3, false},
+		{util.Point{X: 4, Y: 4}, 0, false},
+		{util.Point{X: 0, Y: 4}, 3, false},
+		{util.Point{X: 4, Y: 5}, 0, true},
 	}
 
 	for _, tc := range testcases {

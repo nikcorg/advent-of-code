@@ -7,18 +7,19 @@ import (
 	"sync"
 	"time"
 
+	"nikc.org/aoc2022/util"
 	"nikc.org/aoc2022/util/stack"
 )
 
 type View struct {
-	from Point
+	from util.Point
 	dist int
 }
 
 func solveSecond(input string) (int, error) {
 	m := getTreeMap(bufio.NewScanner(strings.NewReader(input)))
 
-	vds := map[Point]int{}
+	vds := map[util.Point]int{}
 
 	wg := sync.WaitGroup{}
 
@@ -50,23 +51,23 @@ func solveSecond(input string) (int, error) {
 	maxY := m.Width() - 1
 
 	type probeSpec struct {
-		lookAt Point
-		points <-chan Point
+		lookAt util.Point
+		points <-chan util.Point
 	}
 
 	jobs := stack.New[*probeSpec]()
 
 	for y := 0; y < maxY; y++ {
 		jobs.Push(
-			&probeSpec{Point{-1, 0}, pointGenerator(Point{0, y}, Point{1, 0}, Point{maxX, y})},
-			&probeSpec{Point{1, 0}, pointGenerator(Point{maxX, y}, Point{-1, 0}, Point{0, y})},
+			&probeSpec{util.NewPoint(-1, 0), pointGenerator(util.NewPoint(0, y), util.NewPoint(1, 0), util.NewPoint(maxX, y))},
+			&probeSpec{util.NewPoint(1, 0), pointGenerator(util.NewPoint(maxX, y), util.NewPoint(-1, 0), util.NewPoint(0, y))},
 		)
 	}
 
 	for x := 0; x < maxX; x++ {
 		jobs.Push(
-			&probeSpec{Point{0, -1}, pointGenerator(Point{x, 0}, Point{0, 1}, Point{x, maxY})},
-			&probeSpec{Point{0, 1}, pointGenerator(Point{x, maxY}, Point{0, -1}, Point{x, 0})},
+			&probeSpec{util.NewPoint(0, -1), pointGenerator(util.NewPoint(x, 0), util.NewPoint(0, 1), util.NewPoint(x, maxY))},
+			&probeSpec{util.NewPoint(0, 1), pointGenerator(util.NewPoint(x, maxY), util.NewPoint(0, -1), util.NewPoint(x, 0))},
 		)
 	}
 
@@ -104,14 +105,14 @@ func solveSecond(input string) (int, error) {
 	return best, nil
 }
 
-func probeFromPoint(m *treeMap, vec Point, points <-chan Point, r chan<- View) {
+func probeFromPoint(m *treeMap, vec util.Point, points <-chan util.Point, r chan<- View) {
 	start := <-points
 
 	// Always starts at the edge, which has a 0 distance view
 	r <- View{start, 0}
 
 	// Keep track of where the previous tree of different heights were
-	seen := map[int]Point{}
+	seen := map[int]util.Point{}
 
 	for p := range points {
 		ownHgt, _ := m.At(p)
