@@ -53,19 +53,11 @@ func traversalCostRev(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int
 		goFrom, err := m.At(from)
 		if err != nil {
 			return 0, err
-		} else if goFrom == 'S' {
-			goFrom = 'a'
-		} else if goFrom == 'E' {
-			goFrom = 'a'
 		}
 
 		goTo, err := m.At(to)
 		if err != nil {
 			return 0, err
-		} else if goTo == 'E' {
-			goTo = 'z'
-		} else if goTo == 'S' {
-			goTo = 'a'
 		}
 
 		if goFrom < goTo-1 {
@@ -203,10 +195,14 @@ func newMap(s *bufio.Scanner) (*elevationMap, error) {
 		if !foundStart || !foundEnd {
 			for i, c := range m.elevations[scanOffset:] {
 				if c == 'S' {
-					m.start = dijkstra.NewPoint((scanOffset+i)%m.width, (scanOffset+i)/m.width)
+					p := (scanOffset + i)
+					m.elevations[p] = 'a'
+					m.start = dijkstra.NewPoint(p%m.width, p/m.width)
 					foundStart = true
 				} else if c == 'E' {
-					m.end = dijkstra.NewPoint((scanOffset+i)%m.width, (scanOffset+i)/m.width)
+					p := (scanOffset + i)
+					m.elevations[p] = 'z'
+					m.end = dijkstra.NewPoint(p%m.width, p/m.width)
 					foundEnd = true
 				}
 
