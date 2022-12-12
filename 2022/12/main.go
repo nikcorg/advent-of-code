@@ -64,7 +64,7 @@ func traversalCostRev(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int
 
 		// Upwards only a height difference of 1 is possible to traverse
 		if goFrom < goTo-1 {
-			return 0, fmt.Errorf("%w: can't go from %s to %s", errImpossible, string(goFrom), string(goTo))
+			return 0, errImpossible
 		}
 
 		// Because a traversable vertice is essentially free (1 or negative), it can be a
