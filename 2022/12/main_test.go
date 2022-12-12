@@ -32,23 +32,6 @@ func TestSolveSecond(t *testing.T) {
 	assert.Equal(t, 29, v)
 }
 
-func TestTraversalCost(t *testing.T) {
-	m, _ := newMap(bufio.NewScanner(strings.NewReader(testInput)))
-	cost := traversalCostRev(m)
-
-	cases := []struct {
-		from, to  []int
-		shouldErr bool
-	}{
-		{[]int{0, 0}, []int{0, 1}, false},
-	}
-
-	for _, tc := range cases {
-		c, err := cost(dijkstra.NewPoint(tc.from[0], tc.from[1]), dijkstra.NewPoint(tc.to[0], tc.to[1]))
-		assert.NoError(t, err, c)
-	}
-}
-
 func TestNewMap(t *testing.T) {
 	m, err := newMap(bufio.NewScanner(strings.NewReader(testInput)))
 
