@@ -28,22 +28,16 @@ import (
 // 21
 // 22      return dist[], prev[]
 
-func Dijkstra(start, end Point, cost func(Point, Point) (int, error), dist map[Point]int) ([]Point, map[Point]int, error) {
-	pq := make(PriorityQueue, 0)
-
-	heap.Init(&pq)
-
+func FindPath(start, end Point, cost func(Point, Point) (int, error)) ([]Point, map[Point]int, error) {
 	visited := map[Point]struct{}{}
-
-	if dist == nil {
-		dist = map[Point]int{}
-	}
+	prev := map[Point]*Point{}
+	dist := map[Point]int{}
+	vertices := map[Point]*Vertex{}
+	pq := make(PriorityQueue, 0)
 
 	dist[start] = 0
 
-	prev := map[Point]*Point{}
-
-	vertices := map[Point]*Vertex{}
+	heap.Init(&pq)
 	heap.Push(&pq, &Vertex{value: start, priority: 0})
 
 	for {
@@ -51,31 +45,30 @@ func Dijkstra(start, end Point, cost func(Point, Point) (int, error), dist map[P
 			break
 		}
 
-		u := heap.Pop(&pq).(*Vertex)
-		visited[u.value] = struct{}{}
+		currV := heap.Pop(&pq).(*Vertex)
+		curr := currV.value
+		currDist := dist[curr]
 
-		for n := range u.value.Neighbours() {
-			c, err := cost(u.value, n)
+		visited[currV.value] = struct{}{}
+
+		for next := range curr.Neighbours() {
+			c, err := cost(curr, next)
 			if err != nil {
 				continue
-			} else if _, ok := visited[n]; ok {
+			} else if _, ok := visited[next]; ok {
 				continue
 			}
 
-			v := &Vertex{value: n, priority: c}
+			v := &Vertex{value: next, priority: c}
 			heap.Push(&pq, v)
-			vertices[n] = v
+			vertices[next] = v
 
-			uDist, ok := dist[u.value]
-			alt := uDist + c
-			if !ok {
-				alt = c
-			}
+			distViaCurr := currDist + c
 
-			if vDist, ok := dist[n]; !ok || alt < vDist {
-				dist[n] = alt
-				prev[n] = &u.value
-				pq.update(vertices[n], n, alt)
+			if prevDistToNext, ok := dist[next]; !ok || distViaCurr < prevDistToNext {
+				dist[next] = distViaCurr
+				prev[next] = &currV.value
+				pq.update(vertices[next], next, distViaCurr)
 			}
 		}
 	}
