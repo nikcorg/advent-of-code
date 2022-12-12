@@ -54,14 +54,7 @@ func Dijkstra(start, end Point, cost func(Point, Point) (int, error), dist map[P
 		u := heap.Pop(&pq).(*Vertex)
 		visited[u.value] = struct{}{}
 
-		ns := []Point{
-			{u.value.X - 1, u.value.Y},
-			{u.value.X, u.value.Y - 1},
-			{u.value.X + 1, u.value.Y},
-			{u.value.X, u.value.Y + 1},
-		}
-
-		for _, n := range ns {
+		for n := range u.value.Neighbours() {
 			c, err := cost(u.value, n)
 			if err != nil {
 				continue
