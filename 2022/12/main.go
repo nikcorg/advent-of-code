@@ -79,7 +79,7 @@ func solveFirst(input string) (int, error) {
 		return 0, err
 	}
 
-	path, _, err := dijkstra.Dijkstra(m.Width(), m.Height(), m.End(), m.Start(), m.Points(), traversalCostRev(m), nil)
+	path, _, err := dijkstra.Dijkstra(m.End(), m.Start(), traversalCostRev(m), nil)
 
 	if err != nil {
 		return 0, err
@@ -95,7 +95,7 @@ func solveSecond(input string) (int, error) {
 	}
 
 	// Run the finder algorithm once to construct the cost graph
-	_, costs, err := dijkstra.Dijkstra(m.Width(), m.Height(), m.End(), m.Start(), m.Points(), traversalCostRev(m), nil)
+	_, costs, err := dijkstra.Dijkstra(m.End(), m.Start(), traversalCostRev(m), nil)
 	if err != nil {
 		return 0, err
 	}

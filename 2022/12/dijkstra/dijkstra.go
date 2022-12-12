@@ -28,9 +28,7 @@ import (
 // 21
 // 22      return dist[], prev[]
 
-type PointGenerator func() (Point, error)
-
-func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point, Point) (int, error), dist map[Point]int) ([]Point, map[Point]int, error) {
+func Dijkstra(start, end Point, cost func(Point, Point) (int, error), dist map[Point]int) ([]Point, map[Point]int, error) {
 	pq := make(PriorityQueue, 0)
 
 	heap.Init(&pq)
