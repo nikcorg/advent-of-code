@@ -48,6 +48,8 @@ func mainWithErr(out io.Writer, input string) error {
 
 var errImpossible = errors.New("impossible")
 
+// Calculate traversal cost in a reverse perspective, to enable calculating distances starting
+// at the end location.
 func traversalCostRev(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int, error) {
 	return func(to dijkstra.Point, from dijkstra.Point) (int, error) {
 		goFrom, err := m.At(from)
@@ -60,12 +62,13 @@ func traversalCostRev(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int
 			return 0, err
 		}
 
+		// Upwards only a height difference of 1 is possible to traverse
 		if goFrom < goTo-1 {
 			return 0, fmt.Errorf("%w: can't go from %s to %s", errImpossible, string(goFrom), string(goTo))
 		}
 
-		// Because a traversable vertice is essentially free (1 or negative), it can be a constant. Reachable
-		// is the only meaningful test.
+		// Because a traversable vertice is essentially free (1 or negative), it can be a
+		// constant. Reachable is the only meaningful test.
 		return 1, nil
 	}
 }
