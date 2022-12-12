@@ -34,7 +34,7 @@ func TestSolveSecond(t *testing.T) {
 
 func TestTraversalCost(t *testing.T) {
 	m, _ := newMap(bufio.NewScanner(strings.NewReader(testInput)))
-	cost := traversalCost(m)
+	cost := traversalCostRev(m)
 
 	cases := []struct {
 		from, to  []int

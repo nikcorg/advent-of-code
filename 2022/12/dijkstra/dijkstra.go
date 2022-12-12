@@ -3,7 +3,6 @@ package dijkstra
 import (
 	"container/heap"
 	"fmt"
-	"math"
 )
 
 // 1  function Dijkstra(Graph, source):
@@ -31,35 +30,23 @@ import (
 
 type PointGenerator func() (Point, error)
 
-func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point, Point) (int, error)) ([]Point, error) {
+func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point, Point) (int, error), dist map[Point]int) ([]Point, map[Point]int, error) {
 	pq := make(PriorityQueue, 0)
 
 	heap.Init(&pq)
 
 	visited := map[Point]struct{}{}
-	dist := map[Point]int{}
+
+	if dist == nil {
+		dist = map[Point]int{}
+	}
+
 	dist[start] = 0
 
 	prev := map[Point]*Point{}
 
 	vertices := map[Point]*Vertex{}
-	for {
-		p, ok := <-points
-		if !ok {
-			break
-		}
-
-		pDist, ok := dist[p]
-		if !ok {
-			pDist = math.MaxInt
-		}
-		v := &Vertex{
-			value:    p,
-			priority: pDist,
-		}
-		vertices[p] = v
-		heap.Push(&pq, v)
-	}
+	heap.Push(&pq, &Vertex{value: start, priority: 0})
 
 	for {
 		if pq.Len() < 1 {
@@ -76,13 +63,17 @@ func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point
 			{u.value.X, u.value.Y + 1},
 		}
 
-		for _, v := range ns {
-			c, err := cost(u.value, v)
+		for _, n := range ns {
+			c, err := cost(u.value, n)
 			if err != nil {
 				continue
-			} else if _, ok := visited[v]; ok {
+			} else if _, ok := visited[n]; ok {
 				continue
 			}
+
+			v := &Vertex{value: n, priority: c}
+			heap.Push(&pq, v)
+			vertices[n] = v
 
 			uDist, ok := dist[u.value]
 			alt := uDist + c
@@ -90,10 +81,10 @@ func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point
 				alt = c
 			}
 
-			if vDist, ok := dist[v]; !ok || alt < vDist {
-				dist[v] = alt
-				prev[v] = &u.value
-				pq.update(vertices[v], v, alt)
+			if vDist, ok := dist[n]; !ok || alt < vDist {
+				dist[n] = alt
+				prev[n] = &u.value
+				pq.update(vertices[n], n, alt)
 			}
 		}
 	}
@@ -103,7 +94,10 @@ func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point
 
 	for {
 		if p, ok := prev[next]; !ok {
-			return nil, fmt.Errorf("broken path to %+v from %+v", next, path[0])
+			if len(path) == 0 {
+				return nil, dist, fmt.Errorf("broken path to %+v", next)
+			}
+			return nil, dist, fmt.Errorf("broken path to %+v from %+v", next, path[0])
 		} else {
 			path = append([]Point{next}, path...)
 			next = *p
@@ -114,5 +108,5 @@ func Dijkstra(gW, gH int, start, end Point, points <-chan Point, cost func(Point
 		}
 	}
 
-	return path, nil
+	return path, dist, nil
 }

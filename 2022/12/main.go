@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"strings"
 
@@ -49,8 +48,8 @@ func mainWithErr(out io.Writer, input string) error {
 
 var errImpossible = errors.New("impossible")
 
-func traversalCost(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int, error) {
-	return func(from dijkstra.Point, to dijkstra.Point) (int, error) {
+func traversalCostRev(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int, error) {
+	return func(to dijkstra.Point, from dijkstra.Point) (int, error) {
 		goFrom, err := m.At(from)
 		if err != nil {
 			return 0, err
@@ -73,11 +72,9 @@ func traversalCost(m *elevationMap) func(dijkstra.Point, dijkstra.Point) (int, e
 			return 0, fmt.Errorf("%w: can't go from %s to %s", errImpossible, string(goFrom), string(goTo))
 		}
 
-		// Because the route involves drops and Dijkstra can't handle negative costs,
-		// we need to offset the cost by 26 to avoid going below zero.
-		cost := 26 + int(goFrom) - int(goTo)
-
-		return cost, nil
+		// Because a traversable vertice is essentially free (1 or negative), it can be a constant. Reachable
+		// is the only meaningful test.
+		return 1, nil
 	}
 }
 
@@ -87,7 +84,7 @@ func solveFirst(input string) (int, error) {
 		return 0, err
 	}
 
-	path, err := dijkstra.Dijkstra(m.Width(), m.Height(), m.Start(), m.End(), m.Points(), traversalCost(m))
+	path, _, err := dijkstra.Dijkstra(m.Width(), m.Height(), m.End(), m.Start(), m.Points(), traversalCostRev(m), nil)
 
 	if err != nil {
 		return 0, err
@@ -102,25 +99,23 @@ func solveSecond(input string) (int, error) {
 		return 0, err
 	}
 
-	locs := []dijkstra.Point{}
-	for p := range m.Points() {
-		if v, _ := m.At(p); v == 'a' {
-			locs = append(locs, p)
-		}
+	// Run the finder algorithm once to construct the cost graph
+	_, costs, err := dijkstra.Dijkstra(m.Width(), m.Height(), m.End(), m.Start(), m.Points(), traversalCostRev(m), nil)
+	if err != nil {
+		return 0, err
 	}
 
-	// What we should do here is to retain the cost from square to square map to keep the
-	// recalculation costs down, but who cares about a few CPU cycles, right? At least not
-	// until it becomes necessary for completion within a reasonable time...
-	shortestPathLen := math.MaxInt
-	for _, p := range locs {
-		path, err := dijkstra.Dijkstra(m.Width(), m.Height(), p, m.End(), m.Points(), traversalCost(m))
-		if err != nil {
-			// some starting points will not have a path
+	shortestPathLen := costs[m.Start()]
+
+	// Because the traversal cost is constant, the distance (cost) at each point of the graph
+	// is also the traversal distance
+	for p := range m.Points() {
+		if v, _ := m.At(p); v != 'a' {
 			continue
 		}
-		if len(path) < shortestPathLen {
-			shortestPathLen = len(path)
+
+		if cost, ok := costs[p]; ok && cost < shortestPathLen {
+			shortestPathLen = costs[p]
 		}
 	}
 
