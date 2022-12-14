@@ -141,14 +141,13 @@ const (
 )
 
 func newCaveMap() *caveMap {
-	return &caveMap{tiles: map[util.Point]tile{}, floorY: -1, infinite: false}
+	return &caveMap{tiles: map[util.Point]tile{}, infinite: false}
 }
 
 type caveMap struct {
 	tiles    map[util.Point]tile
 	minXY    *util.Point
 	maxXY    *util.Point
-	floorY   int
 	infinite bool
 }
 
@@ -174,14 +173,8 @@ func (m *caveMap) SetInfinite(i bool) {
 	m.infinite = i
 }
 
-func (m *caveMap) SetFloorY(y int) {
-	m.floorY = y
-}
-
 func (m *caveMap) WithinBounds(p util.Point) bool {
-	if m.infinite && m.floorY > -1 {
-		return p.Y < m.floorY
-	} else if m.infinite {
+	if m.infinite {
 		return true
 	}
 
