@@ -3,20 +3,33 @@ package main
 import (
 	"bufio"
 	_ "embed"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"nikc.org/aoc2022/util"
 )
 
 var (
 	//go:embed input.txt
-	input string
+	input   string
+	dumpMap = flag.Bool("d", false, "dump final map state to disk")
+	track   = flag.Bool("t", false, "measure execution times")
 )
 
+func timeTrack(start time.Time, name string) {
+	if *track {
+		elapsed := time.Since(start)
+		fmt.Fprintf(os.Stderr, "%s took %s\n", name, elapsed)
+	}
+}
+
 func main() {
+	flag.Parse()
+
 	if err := mainWithErr(os.Stdout, input); err != nil {
 		io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
 	}
@@ -30,6 +43,7 @@ func mainWithErr(out io.Writer, input string) error {
 }
 
 func solveFirst(input string) int {
+	defer timeTrack(time.Now(), "solveFirst")
 	m := createMap(bufio.NewScanner(strings.NewReader(input)))
 
 	isFree := func(p util.Point) bool { return m.At(p) == EMPTY }
@@ -49,10 +63,15 @@ func solveFirst(input string) int {
 		grains++
 	}
 
+	if *dumpMap {
+		dumpMapToDisk(m, "first")
+	}
+
 	return grains
 }
 
 func solveSecond(input string) int {
+	defer timeTrack(time.Now(), "solveFirst")
 	m := createMap(bufio.NewScanner(strings.NewReader(input)))
 	m.SetInfinite(true)
 
@@ -70,7 +89,40 @@ func solveSecond(input string) int {
 		grains++
 	}
 
+	if *dumpMap {
+		dumpMapToDisk(m, "second")
+	}
+
 	return grains
+}
+
+func dumpMapToDisk(m *caveMap, name string) {
+	defer timeTrack(time.Now(), "dumpMap")
+
+	minXY, maxXY := m.MinXY(), m.MaxXY()
+	w, h := maxXY.X-minXY.X, maxXY.Y-minXY.Y
+	fn := fmt.Sprintf("./mapdump-%s.asc", name)
+	f, err := os.Create(fn)
+	if err != nil {
+		panic(f)
+	}
+	defer f.Close()
+
+	fmt.Fprintf(f, "map dimensions w=%d h=%d\n", w, h)
+
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			p := util.NewPoint(minXY.X+x, minXY.Y+y)
+			if t := m.At(p); t != EMPTY {
+				fmt.Fprint(f, string(t))
+			} else {
+				fmt.Fprint(f, "·")
+			}
+		}
+		fmt.Fprintln(f)
+	}
+	fmt.Fprintln(f)
+	fmt.Fprintf(os.Stderr, "dumped map state to %s\n", fn)
 }
 
 var (
@@ -105,6 +157,7 @@ func (s *sand) Drop(isFree func(util.Point) bool) bool {
 }
 
 func createMap(s *bufio.Scanner) *caveMap {
+	defer timeTrack(time.Now(), "createMap")
 	m := newCaveMap()
 
 	for s.Scan() {
