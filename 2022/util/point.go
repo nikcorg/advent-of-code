@@ -14,6 +14,10 @@ func (p Point) Equals(q Point) bool {
 	return p.X == q.X && p.Y == q.Y
 }
 
+func (p Point) ManhattanDistance(q Point) int {
+	return int(math.Abs(float64(p.X-q.X)) + math.Abs(float64(p.Y-q.Y)))
+}
+
 func (p Point) DistanceTo(q Point) float64 {
 	distX := math.Abs(float64(p.X - q.X))
 	distY := math.Abs(float64(p.Y - q.Y))

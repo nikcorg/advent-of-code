@@ -15,6 +15,10 @@ func (s Set[T]) Add(x T) {
 	s[x] = struct{}{}
 }
 
+func (s Set[T]) Remove(x T) {
+	delete(s, x)
+}
+
 func (s Set[T]) Intersection(x Set[T]) Set[T] {
 	a, b := s, x
 	if a.Size() < b.Size() {
