@@ -24,6 +24,11 @@ func TestSolveFirst(t *testing.T) {
 	assert.Equal(t, 26, v)
 }
 
+func TestSolveSecond(t *testing.T) {
+	v := solveSecond(testInput, 0, 20)
+	assert.Equal(t, 56000011, v)
+}
+
 func TestParseInput(t *testing.T) {
 	m := parseInput(bufio.NewScanner(strings.NewReader(testInput)))
 
