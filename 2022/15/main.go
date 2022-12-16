@@ -128,29 +128,39 @@ func solveSecond(input string, minXY, maxXY int) int {
 	seekers := stack.New[*seekerJob]()
 
 	for s, d := range sensors {
-		triangles = append(triangles,
-			// Top left
-			Triangle{s, s.Add(util.NewPoint(-d, 0)), s.Add(util.NewPoint(0, -d))},
-			// Bottom left
-			Triangle{s, s.Add(util.NewPoint(-d, 0)), s.Add(util.NewPoint(0, d))},
-			// // Top right
-			Triangle{s, s.Add(util.NewPoint(d, 0)), s.Add(util.NewPoint(0, -d))},
-			// // Bottom right
-			Triangle{s, s.Add(util.NewPoint(d, 0)), s.Add(util.NewPoint(0, d))},
-		)
-
 		r := d + 1
 
-		seekers.Push(
+		// Only include triangles and traversal if any part of the triangle intersects with the searching area.
+		// This could be further optimised to separately check the traversal, since it's one step outside the
+		// hypotenuse and might be beyond the searching area, but this is already good enough.
+
+		topLeft := Triangle{s, s.Add(util.NewPoint(-d, 0)), s.Add(util.NewPoint(0, -d))}
+		if (minXY-(topLeft.p1.X-d) < 0 || maxXY-topLeft.p1.X > 0) && (minXY-(topLeft.p1.Y-d) < 0 || maxXY-topLeft.p1.Y > 0) {
+			triangles = append(triangles, topLeft)
 			// from above to the left
-			&seekerJob{s.Add(util.NewPoint(0, r*-1)), s.Add(util.NewPoint(r*-1, 0)), downAndLeft},
+			seekers.Push(&seekerJob{s.Add(util.NewPoint(0, r*-1)), s.Add(util.NewPoint(r*-1, 0)), downAndLeft})
+		}
+
+		bottomLeft := Triangle{s, s.Add(util.NewPoint(-d, 0)), s.Add(util.NewPoint(0, d))}
+		if (minXY-(topLeft.p1.X-d) < 0 || maxXY-topLeft.p1.X > 0) && (minXY-topLeft.p1.Y < 0 || maxXY-(topLeft.p1.Y+d) > 0) {
+			triangles = append(triangles, bottomLeft)
 			// from the left to below
-			&seekerJob{s.Add(util.NewPoint(r*-1, 0)), s.Add(util.NewPoint(0, r)), downAndRight},
+			seekers.Push(&seekerJob{s.Add(util.NewPoint(r*-1, 0)), s.Add(util.NewPoint(0, r)), downAndRight})
+		}
+
+		topRight := Triangle{s, s.Add(util.NewPoint(d, 0)), s.Add(util.NewPoint(0, -d))}
+		if (minXY-topLeft.p1.X < 0 || maxXY-(topLeft.p1.X+d) > 0) && (minXY-(topLeft.p1.Y-d) < 0 || maxXY-topLeft.p1.Y > 0) {
+			triangles = append(triangles, topRight)
 			// from below to the right
-			&seekerJob{s.Add(util.NewPoint(0, r)), s.Add(util.NewPoint(r, 0)), upAndRight},
+			seekers.Push(&seekerJob{s.Add(util.NewPoint(0, r)), s.Add(util.NewPoint(r, 0)), upAndRight})
+		}
+
+		bottomRight := Triangle{s, s.Add(util.NewPoint(d, 0)), s.Add(util.NewPoint(0, d))}
+		if (minXY-topLeft.p1.X < 0 || maxXY-(topLeft.p1.X+d) > 0) && (minXY-(topLeft.p1.Y) < 0 || maxXY-(topLeft.p1.Y+d) > 0) {
+			triangles = append(triangles, bottomRight)
 			// from the right to above
-			&seekerJob{s.Add(util.NewPoint(r, 0)), s.Add(util.NewPoint(0, r*-1)), upAndLeft},
-		)
+			seekers.Push(&seekerJob{s.Add(util.NewPoint(r, 0)), s.Add(util.NewPoint(0, r*-1)), upAndLeft})
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
