@@ -10,7 +10,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"nikc.org/aoc2022/util"
@@ -42,7 +41,7 @@ func main() {
 
 func mainWithErr(out io.Writer, input string) error {
 	fmt.Fprint(out, "=====[ Day 15 ]=====\n")
-	fmt.Fprintf(out, "first: %d\n", solveFirst(input, 2000000))
+	fmt.Fprintf(out, "first: %d\n", solveFirst(input, 2_000_000))
 	fmt.Fprintf(out, "second: %d\n", solveSecond(input, 0, 4_000_000))
 	return nil
 }
@@ -50,62 +49,33 @@ func mainWithErr(out io.Writer, input string) error {
 func solveFirst(input string, exploreY int) int {
 	defer timeTrack(time.Now(), "solveFirst")
 
+	m := parseInput(bufio.NewScanner(strings.NewReader(input)))
+
 	// impossible locations
 	locs := set.New[util.Point]()
-	c, mut := make(chan util.Point), sync.RWMutex{}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	for s, b := range m {
+		d := s.ManhattanDistance(b)
 
-	go func() {
-		mut.Lock()
-		defer mut.Unlock()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case p := <-c:
-				locs.Add(p)
-			}
+		// Check if this beacon's range intersects with exploreY
+		if s.Y-d > exploreY || s.Y+d < exploreY {
+			continue
 		}
-	}()
 
-	wg := sync.WaitGroup{}
-	explore := func(p util.Point, motion util.Point, ref util.Point, refDist int) {
-		defer wg.Done()
-		for d := p.ManhattanDistance(ref); d < refDist; p, d = p.Add(motion), p.ManhattanDistance(ref) {
-			c <- p
+		l, r := util.NewPoint(s.X, exploreY), util.NewPoint(s.X, exploreY)
+		for l.ManhattanDistance(s) <= d {
+			locs.Add(l)
+			locs.Add(r)
+			l.X -= 1
+			r.X += 1
 		}
 	}
-
-	m := parseInput(bufio.NewScanner(strings.NewReader(input)))
-	motions := []util.Point{util.NewPoint(-1, 0), util.NewPoint(1, 0)}
-
-	for sensor, beacon := range m {
-		dist := sensor.ManhattanDistance(beacon)
-		start := util.NewPoint(sensor.X, exploreY)
-
-		wg.Add(len(motions))
-		for _, m := range motions {
-			go explore(start, m, sensor, dist)
-		}
-	}
-
-	wg.Wait()
-	cancel()
 
 	// remove any beacon and sensor locations from the set of impossible locations
-	mut.Lock()
 	for s, b := range m {
 		locs.Remove(b)
 		locs.Remove(s)
 	}
-	mut.Unlock()
-
-	mut.RLock()
-	defer mut.RUnlock()
 
 	return locs.Size()
 }
@@ -183,7 +153,6 @@ func solveSecond(input string, minXY, maxXY int) int {
 			// from the right to above
 			&seekerJob{s.Add(util.NewPoint(r, 0)), s.Add(util.NewPoint(0, r*-1)), upAndLeft},
 		)
-
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -265,12 +234,13 @@ func dumpTriangles(ts []Triangle, b util.Point, minXY, maxXY int) {
 	fmt.Fprintln(f)
 
 	for _, tg := range ts {
-		fmt.Fprintln(f, "ctx.fillStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.2)`")
 		fmt.Fprint(f, "ctx.beginPath();")
+		fmt.Fprintln(f, "ctx.fillStyle=`rgba(${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},${Math.floor(Math.random()*255)},0.2)`")
 		fmt.Fprintf(f, "ctx.moveTo(%d, %d);", int(float64(tg.p1.X)*scale), int(float64(tg.p1.Y)*scale))
 		fmt.Fprintf(f, "ctx.lineTo(%d, %d);", int(float64(tg.p2.X)*scale), int(float64(tg.p2.Y)*scale))
 		fmt.Fprintf(f, "ctx.lineTo(%d, %d);", int(float64(tg.p3.X)*scale), int(float64(tg.p3.Y)*scale))
-		fmt.Fprintf(f, "ctx.closePath();")
+		fmt.Fprintf(f, "ctx.lineTo(%d, %d);", int(float64(tg.p1.X)*scale), int(float64(tg.p1.Y)*scale))
+		fmt.Fprintln(f, "ctx.stroke();")
 		fmt.Fprintln(f, "ctx.fill();")
 	}
 
