@@ -36,7 +36,7 @@ func TestSolveSecond(t *testing.T) {
 }
 
 func TestParseInput(t *testing.T) {
-	m := parseInput(bufio.NewScanner(strings.NewReader(testInput)))
+	m, _ := parseInput(bufio.NewScanner(strings.NewReader(testInput)))
 
 	assert.Equal(t, 14, len(m)) // one pair for each line in the input
 }

@@ -50,13 +50,11 @@ func mainWithErr(out io.Writer, input string) error {
 func solveFirst(input string, exploreY int) int {
 	defer timeTrack(time.Now(), "solveFirst")
 
-	m := parseInput(bufio.NewScanner(strings.NewReader(input)))
+	m, bs := parseInput(bufio.NewScanner(strings.NewReader(input)))
 
 	minX, maxX := math.MaxInt, math.MinInt
 
-	for s, b := range m {
-		d := s.ManhattanDistance(b)
-
+	for s, d := range m {
 		// Check if this beacon's range intersects with exploreY
 		if s.Y-d > exploreY || s.Y+d < exploreY {
 			continue
@@ -69,16 +67,11 @@ func solveFirst(input string, exploreY int) int {
 		minX, maxX = util.Min(minX, s.X-dX), util.Max(maxX, s.X+dX)
 	}
 
-	possible := maxX - minX + 1 // plus 1, because zero is a thing
+	possible := maxX - minX + 1 // plus 1, because 0 is a thing
 
 	// remove any beacon and sensor locations from the set of impossible locations
-	beacons := set.New[util.Point]()
-	for _, b := range m {
-		beacons.Add(b)
-	}
-
-	for b := range beacons {
-		if b.Y == exploreY && minX <= b.X && b.X <= maxX {
+	for b := range bs {
+		if b.Y == exploreY && !(b.X < minX || maxX < b.X) {
 			possible--
 		}
 	}
@@ -86,12 +79,14 @@ func solveFirst(input string, exploreY int) int {
 	return possible
 }
 
-func parseInput(s *bufio.Scanner) map[util.Point]util.Point {
+func parseInput(s *bufio.Scanner) (map[util.Point]int, set.Set[util.Point]) {
 	defer timeTrack(time.Now(), "parseInput")
 
 	xyPair := regexp.MustCompile(`at x=(-?\d+), y=(-?\d+)`)
 
-	m := map[util.Point]util.Point{}
+	m := map[util.Point]int{}
+	bs := set.New[util.Point]()
+
 	for s.Scan() {
 		matches := xyPair.FindAllStringSubmatch(s.Text(), 2)
 		if matches == nil || len(matches) != 2 {
@@ -101,10 +96,11 @@ func parseInput(s *bufio.Scanner) map[util.Point]util.Point {
 		sensor := util.NewPoint(util.MustAtoi(matches[0][1]), util.MustAtoi(matches[0][2]))
 		beacon := util.NewPoint(util.MustAtoi(matches[1][1]), util.MustAtoi(matches[1][2]))
 
-		m[sensor] = beacon
+		m[sensor] = sensor.ManhattanDistance(beacon)
+		bs.Add(beacon)
 	}
 
-	return m
+	return m, bs
 }
 
 var (
@@ -117,15 +113,10 @@ var (
 // Lucky 13
 const maxSeekers = 13
 
-// While this solution works, it doesn't work every time. If let run, it finds more than one
-// location; 5 with the test data, and 3 with the actual data. I'm not sure if the problme lies
-// with my solution or the data, most likely the former. I'm miffed about the non-deterministic
-// nature of my solution, but guessing got me the second star. And it's at least reasonably quick,
-// particularly compared to the first part. I'm slightly tempted to try and optimise it.
 func solveSecond(input string, minXY, maxXY int) int {
 	defer timeTrack(time.Now(), "solveSecond")
 
-	m := parseInput(bufio.NewScanner(strings.NewReader(input)))
+	sensors, beacons := parseInput(bufio.NewScanner(strings.NewReader(input)))
 
 	type seekerJob struct {
 		from   util.Point
@@ -136,9 +127,7 @@ func solveSecond(input string, minXY, maxXY int) int {
 	triangles := []Triangle{}
 	seekers := stack.New[*seekerJob]()
 
-	for s, b := range m {
-		d := s.ManhattanDistance(b)
-
+	for s, d := range sensors {
 		triangles = append(triangles,
 			// Top left
 			Triangle{s, s.Add(util.NewPoint(-d, 0)), s.Add(util.NewPoint(0, -d))},
@@ -175,9 +164,7 @@ func solveSecond(input string, minXY, maxXY int) int {
 			trulyLost := true
 
 			// eliminate false positives
-			for s, b := range m {
-				d := s.ManhattanDistance(b)
-
+			for s, d := range sensors {
 				if s.ManhattanDistance(candidate) <= d {
 					trulyLost = false
 					break
@@ -240,13 +227,13 @@ func solveSecond(input string, minXY, maxXY int) int {
 	lb := <-lostBeacon
 
 	if *dump {
-		dumpTriangles(m, triangles, lb, minXY, maxXY)
+		dumpTriangles(sensors, beacons, triangles, lb, minXY, maxXY)
 	}
 
 	return lb.X*4_000_000 + lb.Y
 }
 
-func dumpTriangles(m map[util.Point]util.Point, ts []Triangle, b util.Point, minXY, maxXY int) {
+func dumpTriangles(m map[util.Point]int, beacons set.Set[util.Point], ts []Triangle, b util.Point, minXY, maxXY int) {
 	defer timeTrack(time.Now(), "dump triangles")
 
 	scale := 0.001
@@ -277,13 +264,16 @@ func dumpTriangles(m map[util.Point]util.Point, ts []Triangle, b util.Point, min
 		fmt.Fprintln(f, "ctx.fill();")
 	}
 
-	for s, b := range m {
+	for s := range m {
 		if s.X >= minXY && s.X <= maxXY && s.Y >= minXY && s.Y <= maxXY {
 			fmt.Fprint(f, "ctx.beginPath();")
 			fmt.Fprint(f, `ctx.fillStyle="black";`)
 			fmt.Fprintf(f, `ctx.arc(%d, %d, %d, 0, 2*Math.PI);`, int(float64(s.X)*scale), int(float64(s.Y)*scale), 20)
 			fmt.Fprintln(f, "ctx.fill();")
 		}
+	}
+
+	for b := range beacons {
 		if b.X >= minXY && b.X <= maxXY && b.Y >= minXY && b.Y <= maxXY {
 			fmt.Fprint(f, "ctx.beginPath();")
 			fmt.Fprint(f, `ctx.fillStyle="peru";`)
