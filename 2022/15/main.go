@@ -257,6 +257,7 @@ func dumpTriangles(m map[util.Point]util.Point, ts []Triangle, b util.Point, min
 	fmt.Fprintln(f)
 	fmt.Fprintln(f, `document.body.appendChild(c);`)
 	fmt.Fprintf(f, `const ctx = c.getContext("2d");`)
+	fmt.Fprintln(f, `ctx.fillStyle="white"; ctx.fillRect(0, 0, c.width, c.height);`)
 	fmt.Fprintln(f)
 
 	for _, tg := range ts {
@@ -291,5 +292,9 @@ func dumpTriangles(m map[util.Point]util.Point, ts []Triangle, b util.Point, min
 	fmt.Fprintf(f, `ctx.arc(%d, %d, %d, 0, 2*Math.PI);`, int(float64(b.X)*scale), int(float64(b.Y)*scale), 20)
 	fmt.Fprintln(f, "ctx.stroke();")
 	fmt.Fprintln(f, "ctx.fill();")
+	fmt.Fprintln(f)
+	fmt.Fprintln(f, `const i = document.createElement("img");`)
+	fmt.Fprintln(f, `i.src = c.toDataURL();`)
+	fmt.Fprintln(f, `document.body.appendChild(i);`)
 	fmt.Fprintln(f)
 }
