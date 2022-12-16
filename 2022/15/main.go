@@ -108,6 +108,9 @@ var (
 	upAndLeft    = util.NewPoint(-1, -1)
 )
 
+// Lucky 13
+const maxSeekers = 13
+
 // While this solution works, it doesn't work every time. If let run, it finds more than one
 // location; 5 with the test data, and 3 with the actual data. I'm not sure if the problme lies
 // with my solution or the data, most likely the former. I'm miffed about the non-deterministic
@@ -158,21 +161,34 @@ func solveSecond(input string, minXY, maxXY int) int {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var (
-		lostBeacon util.Point
-		c          = make(chan util.Point)
-	)
+	lostBeacon := make(chan util.Point)
+	lostBeacons := make(chan util.Point, maxSeekers)
 
-	explore := func(ctx context.Context, job *seekerJob) {
+	go func() {
+		for candidate := range lostBeacons {
+			trulyLost := true
+
+			// eliminate false positives
+			for s, b := range m {
+				d := s.ManhattanDistance(b)
+
+				if s.ManhattanDistance(candidate) <= d {
+					trulyLost = false
+					break
+				}
+			}
+
+			if trulyLost {
+				lostBeacon <- candidate
+				return
+			}
+		}
+	}()
+
+	explore := func(ctx context.Context, job *seekerJob) *util.Point {
 		p := job.from
 
 		for !p.Equals(job.to) {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
 			// Hit test triangles when the point is within the search area
 			if p.X >= minXY && p.Y >= minXY && p.X <= maxXY && p.Y <= maxXY {
 				hit := false
@@ -183,38 +199,48 @@ func solveSecond(input string, minXY, maxXY int) int {
 					}
 				}
 				if !hit {
-					c <- p
-					return
+					return &p
 				}
 			}
 
 			// Translate location
 			p = p.Add(job.motion)
 		}
+
+		return nil
 	}
 
-	for i := 0; i < util.Min(23, seekers.Size()); i++ {
+	for n := 0; n < util.Min(maxSeekers-1, seekers.Size()); n++ {
 		go func() {
 			for {
 				job := seekers.Pop()
 				if job == nil {
 					return
 				}
-				explore(ctx, job)
+				p := explore(ctx, job)
+
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					if p != nil {
+						lostBeacons <- *p
+					}
+				}
 			}
 		}()
 	}
 
-	lostBeacon = <-c
+	lb := <-lostBeacon
 
 	if *dump {
-		dumpTriangles(triangles, lostBeacon, minXY, maxXY)
+		dumpTriangles(m, triangles, lb, minXY, maxXY)
 	}
 
-	return lostBeacon.X*4_000_000 + lostBeacon.Y
+	return lb.X*4_000_000 + lb.Y
 }
 
-func dumpTriangles(ts []Triangle, b util.Point, minXY, maxXY int) {
+func dumpTriangles(m map[util.Point]util.Point, ts []Triangle, b util.Point, minXY, maxXY int) {
 	defer timeTrack(time.Now(), "dump triangles")
 
 	scale := 0.001
@@ -244,7 +270,26 @@ func dumpTriangles(ts []Triangle, b util.Point, minXY, maxXY int) {
 		fmt.Fprintln(f, "ctx.fill();")
 	}
 
-	fmt.Fprintln(f, `ctx.fillStyle="black";`)
+	for s, b := range m {
+		if s.X >= minXY && s.X <= maxXY && s.Y >= minXY && s.Y <= maxXY {
+			fmt.Fprint(f, "ctx.beginPath();")
+			fmt.Fprint(f, `ctx.fillStyle="black";`)
+			fmt.Fprintf(f, `ctx.arc(%d, %d, %d, 0, 2*Math.PI);`, int(float64(s.X)*scale), int(float64(s.Y)*scale), 20)
+			fmt.Fprintln(f, "ctx.fill();")
+		}
+		if b.X >= minXY && b.X <= maxXY && b.Y >= minXY && b.Y <= maxXY {
+			fmt.Fprint(f, "ctx.beginPath();")
+			fmt.Fprint(f, `ctx.fillStyle="peru";`)
+			fmt.Fprintf(f, `ctx.arc(%d, %d, %d, 0, 2*Math.PI);`, int(float64(b.X)*scale), int(float64(b.Y)*scale), 20)
+			fmt.Fprintln(f, "ctx.stroke();")
+			fmt.Fprintln(f, "ctx.fill();")
+		}
+	}
+
+	fmt.Fprint(f, "ctx.beginPath();")
+	fmt.Fprint(f, `ctx.fillStyle="hotpink";`)
 	fmt.Fprintf(f, `ctx.arc(%d, %d, %d, 0, 2*Math.PI);`, int(float64(b.X)*scale), int(float64(b.Y)*scale), 20)
+	fmt.Fprintln(f, "ctx.stroke();")
+	fmt.Fprintln(f, "ctx.fill();")
 	fmt.Fprintln(f)
 }
