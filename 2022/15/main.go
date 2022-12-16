@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -51,8 +52,7 @@ func solveFirst(input string, exploreY int) int {
 
 	m := parseInput(bufio.NewScanner(strings.NewReader(input)))
 
-	// impossible locations
-	locs := set.New[util.Point]()
+	minX, maxX := math.MaxInt, math.MinInt
 
 	for s, b := range m {
 		d := s.ManhattanDistance(b)
@@ -62,22 +62,28 @@ func solveFirst(input string, exploreY int) int {
 			continue
 		}
 
-		l, r := util.NewPoint(s.X, exploreY), util.NewPoint(s.X, exploreY)
-		for l.ManhattanDistance(s) <= d {
-			locs.Add(l)
-			locs.Add(r)
-			l.X -= 1
-			r.X += 1
+		// At s.Y the scanline is two d's and then it shrinks by 2 for each step towards exploreY
+		dX := (d*2 - int(math.Abs(float64(s.Y-exploreY)))*2) / 2
+
+		// Adjust the X min/max
+		minX, maxX = util.Min(minX, s.X-dX), util.Max(maxX, s.X+dX)
+	}
+
+	possible := maxX - minX + 1 // plus 1, because zero is a thing
+
+	// remove any beacon and sensor locations from the set of impossible locations
+	beacons := set.New[util.Point]()
+	for _, b := range m {
+		beacons.Add(b)
+	}
+
+	for b := range beacons {
+		if b.Y == exploreY && minX <= b.X && b.X <= maxX {
+			possible--
 		}
 	}
 
-	// remove any beacon and sensor locations from the set of impossible locations
-	for s, b := range m {
-		locs.Remove(b)
-		locs.Remove(s)
-	}
-
-	return locs.Size()
+	return possible
 }
 
 func parseInput(s *bufio.Scanner) map[util.Point]util.Point {
