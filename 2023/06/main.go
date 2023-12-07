@@ -7,9 +7,10 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
+
+	util "nikc.org/aoc2023/util"
 )
 
 var (
@@ -74,7 +75,7 @@ func solveSecond(games [][]int) int {
 		record += fmt.Sprintf("%d", g[1])
 	}
 
-	return solveFirst([][]int{{parseInt(time), parseInt(record)}})
+	return solveFirst([][]int{{util.ParseInt(time), util.ParseInt(record)}})
 }
 
 func parseInput(input string) [][]int {
@@ -89,36 +90,11 @@ func parseInput(input string) [][]int {
 		line := splitter.FindStringSubmatch(scanner.Text())
 		switch line[1] {
 		case "Time":
-			times = fmap(parseInt, ws.Split(line[2], -1))
+			times = util.Fmap(util.ParseInt, ws.Split(line[2], -1))
 		case "Distance":
-			records = fmap(parseInt, ws.Split(line[2], -1))
+			records = util.Fmap(util.ParseInt, ws.Split(line[2], -1))
 		}
 	}
 
-	return zip(times, records)
-}
-
-func parseInt(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
-}
-
-func fmap[X, Y any](f func(X) Y, xs []X) []Y {
-	ys := make([]Y, len(xs))
-	for i, x := range xs {
-		ys[i] = f(x)
-	}
-	return ys
-}
-
-func zip[T any](xs, ys []T) [][]T {
-	l := min(len(xs), len(ys))
-	zs := make([][]T, l)
-
-	for l > 0 {
-		zs[l-1] = []T{xs[l-1], ys[l-1]}
-		l--
-	}
-
-	return zs
+	return util.Zip(times, records)
 }

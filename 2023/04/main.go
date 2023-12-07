@@ -8,8 +8,9 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"nikc.org/aoc2023/util"
 )
 
 var (
@@ -50,7 +51,7 @@ func parseInput(input string) []card {
 	scanner := bufio.NewScanner(strings.NewReader(input))
 	for scanner.Scan() {
 		m := r.FindStringSubmatch(scanner.Text())
-		c := card{ID: parseInt(m[1]), Copies: 1}
+		c := card{ID: util.ParseInt(m[1]), Copies: 1}
 		c.Winners = fold(func(acc map[string]struct{}, x string) map[string]struct{} {
 			acc[x] = struct{}{}
 			return acc
@@ -110,11 +111,6 @@ func solveSecond(cs []card) int {
 	}
 
 	return tot
-}
-
-func parseInt(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
 }
 
 func fold[X any, TAcc any](f func(TAcc, X) TAcc, init TAcc, xs []X) TAcc {

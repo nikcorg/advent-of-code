@@ -33,12 +33,3 @@ func TestSolveSecond(t *testing.T) {
 	solution := solveSecond(games)
 	assert.Equal(t, 71503, solution)
 }
-
-func TestZip(t *testing.T) {
-	as := []int{1, 2, 3}
-	bs := []int{4, 5, 6, 7}
-
-	cs := zip(as, bs)
-
-	assert.Equal(t, [][]int{{1, 4}, {2, 5}, {3, 6}}, cs)
-}

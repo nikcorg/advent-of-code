@@ -8,10 +8,11 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"nikc.org/aoc2023/util"
 )
 
 var (
@@ -134,7 +135,7 @@ func parseInput(input string) ([]int, []sourceToDestMap) {
 		panic(errors.New("seed line not found"))
 	}
 
-	seeds := fmap(parseInt, strings.Split(seedLine[7:], " "))
+	seeds := util.Fmap(util.ParseInt, strings.Split(seedLine[7:], " "))
 	maps := []sourceToDestMap{}
 
 	// skip empty line following seed line
@@ -159,7 +160,7 @@ func parseInput(input string) ([]int, []sourceToDestMap) {
 			continue
 		}
 
-		boundaries := fmap(parseInt, strings.Split(line, " "))
+		boundaries := util.Fmap(util.ParseInt, strings.Split(line, " "))
 		mr := mapRange{
 			DestFrom:   boundaries[0],
 			SourceFrom: boundaries[1],
@@ -175,19 +176,6 @@ func parseInput(input string) ([]int, []sourceToDestMap) {
 	maps = append(maps, tempMap)
 
 	return seeds, maps
-}
-
-func fmap[X, Y any](f func(X) Y, xs []X) []Y {
-	ys := make([]Y, len(xs))
-	for i, x := range xs {
-		ys[i] = f(x)
-	}
-	return ys
-}
-
-func parseInt(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
 }
 
 // source https://gist.github.com/mustafaturan/7a29e8251a7369645fb6c2965f8c2daf

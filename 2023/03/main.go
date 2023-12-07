@@ -6,9 +6,10 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
+
+	"nikc.org/aoc2023/util"
 )
 
 var (
@@ -104,7 +105,7 @@ func solveFirst(m partsMap) int {
 					break
 				}
 				s := m.Map[y*m.Width+i : y*m.Width+j+1]
-				n := parseInt(s)
+				n := util.ParseInt(s)
 				mut.Lock()
 				defer mut.Unlock()
 				// store the number using the location as key, to avoid including
@@ -162,7 +163,7 @@ func solveSecond(m partsMap) int {
 					break
 				}
 				s := m.Map[y*m.Width+i : y*m.Width+j+1]
-				n := parseInt(s)
+				n := util.ParseInt(s)
 				mut.Lock()
 				defer mut.Unlock()
 				// store the number using the location as key, to avoid including
@@ -196,9 +197,4 @@ func isDigit(c byte) bool {
 		return true
 	}
 	return false
-}
-
-func parseInt(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
 }

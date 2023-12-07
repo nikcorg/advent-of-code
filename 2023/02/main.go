@@ -6,8 +6,9 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
+
+	"nikc.org/aoc2023/util"
 )
 
 var (
@@ -48,18 +49,13 @@ var (
 	rSample = regexp.MustCompile(`(\d+) (red|green|blue)`)
 )
 
-func parseInt(s string) int {
-	n, _ := strconv.Atoi(s)
-	return n
-}
-
 func parseInput(input []string) []round {
 	rs := make([]round, len(input))
 	for idx, l := range input {
 		id := rID.FindStringSubmatch(l)[1]
 		samples := strings.Split(strings.SplitN(l, ":", 2)[1], ";")
 
-		rs[idx] = round{ID: parseInt(id)}
+		rs[idx] = round{ID: util.ParseInt(id)}
 
 		for _, s := range samples {
 			g := game{}
@@ -67,11 +63,11 @@ func parseInput(input []string) []round {
 				for _, sample := range rSample.FindAllStringSubmatch(x, -1) {
 					switch sample[2] {
 					case "red":
-						g.Red = parseInt(sample[1])
+						g.Red = util.ParseInt(sample[1])
 					case "green":
-						g.Green = parseInt(sample[1])
+						g.Green = util.ParseInt(sample[1])
 					case "blue":
-						g.Blue = parseInt(sample[1])
+						g.Blue = util.ParseInt(sample[1])
 					}
 				}
 			}
