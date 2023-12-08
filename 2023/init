@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+if (( $# != 1 )); then
+  echo "error: expected exactly one argument" >&2
+  exit 1
+fi
+
+daynum="$(printf "%02d" "$1")"
+dirname="$daynum"
+modname="$(printf "nikc.org/aoc2023/%s" "$daynum")"
+
+if [[ -d "$dirname" ]]; then
+  echo "error: directory $dirname already exists" >&2
+  exit 1
+fi
+
+mkdir -p "$dirname" && cd "$_" && go mod init "$modname" && touch input.txt input_test.txt && { \
+cat > main.go <<EOT
+package main
+
+import (
+  _ "embed"
+  "errors"
+  "fmt"
+  "io"
+  "os"
+)
+
+var (
+  //go:embed input.txt
+  input string
+)
+
+func main() {
+  if err := mainWithErr(os.Stdout, input); err != nil {
+    io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
+  }
+}
+
+func mainWithErr(out io.Writer, input string) error {
+  fmt.Fprint(out, "=====[ Day $daynum ]=====\n")
+  return errors.New("not implemented")
+}
+EOT
+} && { cat > main_test.go <<'EOT'
+package main
+
+import (
+  _ "embed"
+  "bytes"
+  "testing"
+  "github.com/stretchr/testify/assert"
+)
+
+var (
+  //go:embed input_test.txt
+  testInput string
+)
+
+func TestMainWithErr(t *testing.T) {
+  assert.NoError(t, mainWithErr(&bytes.Buffer{}, testInput))
+}
+EOT
+} && go fmt ./*.go && cd .. && go work use "./$daynum" && go work sync
+
