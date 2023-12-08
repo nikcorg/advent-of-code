@@ -55,7 +55,7 @@ func parseInput(input []string) []round {
 		id := rID.FindStringSubmatch(l)[1]
 		samples := strings.Split(strings.SplitN(l, ":", 2)[1], ";")
 
-		rs[idx] = round{ID: util.ParseInt(id)}
+		rs[idx] = round{ID: util.MustParseInt(id)}
 
 		for _, s := range samples {
 			g := game{}
@@ -63,11 +63,11 @@ func parseInput(input []string) []round {
 				for _, sample := range rSample.FindAllStringSubmatch(x, -1) {
 					switch sample[2] {
 					case "red":
-						g.Red = util.ParseInt(sample[1])
+						g.Red = util.MustParseInt(sample[1])
 					case "green":
-						g.Green = util.ParseInt(sample[1])
+						g.Green = util.MustParseInt(sample[1])
 					case "blue":
-						g.Blue = util.ParseInt(sample[1])
+						g.Blue = util.MustParseInt(sample[1])
 					}
 				}
 			}

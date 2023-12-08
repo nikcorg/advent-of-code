@@ -51,7 +51,7 @@ func parseInput(input string) []card {
 	scanner := bufio.NewScanner(strings.NewReader(input))
 	for scanner.Scan() {
 		m := r.FindStringSubmatch(scanner.Text())
-		c := card{ID: util.ParseInt(m[1]), Copies: 1}
+		c := card{ID: util.MustParseInt(m[1]), Copies: 1}
 		c.Winners = fold(func(acc map[string]struct{}, x string) map[string]struct{} {
 			acc[x] = struct{}{}
 			return acc

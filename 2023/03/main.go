@@ -105,7 +105,7 @@ func solveFirst(m partsMap) int {
 					break
 				}
 				s := m.Map[y*m.Width+i : y*m.Width+j+1]
-				n := util.ParseInt(s)
+				n := util.MustParseInt(s)
 				mut.Lock()
 				defer mut.Unlock()
 				// store the number using the location as key, to avoid including
@@ -163,7 +163,7 @@ func solveSecond(m partsMap) int {
 					break
 				}
 				s := m.Map[y*m.Width+i : y*m.Width+j+1]
-				n := util.ParseInt(s)
+				n := util.MustParseInt(s)
 				mut.Lock()
 				defer mut.Unlock()
 				// store the number using the location as key, to avoid including

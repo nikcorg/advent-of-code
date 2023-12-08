@@ -135,7 +135,7 @@ func parseInput(input string) ([]int, []sourceToDestMap) {
 		panic(errors.New("seed line not found"))
 	}
 
-	seeds := util.Fmap(util.ParseInt, strings.Split(seedLine[7:], " "))
+	seeds := util.Fmap(util.MustParseInt, strings.Split(seedLine[7:], " "))
 	maps := []sourceToDestMap{}
 
 	// skip empty line following seed line
@@ -160,7 +160,7 @@ func parseInput(input string) ([]int, []sourceToDestMap) {
 			continue
 		}
 
-		boundaries := util.Fmap(util.ParseInt, strings.Split(line, " "))
+		boundaries := util.Fmap(util.MustParseInt, strings.Split(line, " "))
 		mr := mapRange{
 			DestFrom:   boundaries[0],
 			SourceFrom: boundaries[1],

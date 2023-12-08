@@ -265,7 +265,7 @@ func parseInput(input string) []play {
 		l := strings.Split(s.Text(), " ")
 
 		hand := strings.Split(l[0], "")
-		bid := util.ParseInt(l[1])
+		bid := util.MustParseInt(l[1])
 
 		ps = append(ps, play{hand, handKind(hand), bid})
 	}

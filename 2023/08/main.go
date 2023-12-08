@@ -72,7 +72,7 @@ func solveSecond(c cursor, nm nodemap) int {
 		}
 	}
 
-	steppers, finished, cycles := len(nodes), 0, util.ParseIntWithDefault(os.Getenv("CYCLES"), 1)
+	steppers, finished, cycles := len(nodes), 0, util.ParseIntOrDefault(os.Getenv("CYCLES"), 1)
 	distances := make([]int, steppers)
 
 	for steps := 1; finished < steppers*cycles; steps++ {

@@ -75,7 +75,7 @@ func solveSecond(games [][]int) int {
 		record += fmt.Sprintf("%d", g[1])
 	}
 
-	return solveFirst([][]int{{util.ParseInt(time), util.ParseInt(record)}})
+	return solveFirst([][]int{{util.MustParseInt(time), util.MustParseInt(record)}})
 }
 
 func parseInput(input string) [][]int {
@@ -90,9 +90,9 @@ func parseInput(input string) [][]int {
 		line := splitter.FindStringSubmatch(scanner.Text())
 		switch line[1] {
 		case "Time":
-			times = util.Fmap(util.ParseInt, ws.Split(line[2], -1))
+			times = util.Fmap(util.MustParseInt, ws.Split(line[2], -1))
 		case "Distance":
-			records = util.Fmap(util.ParseInt, ws.Split(line[2], -1))
+			records = util.Fmap(util.MustParseInt, ws.Split(line[2], -1))
 		}
 	}
 
