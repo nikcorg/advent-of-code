@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+if (( $# < 1 )); then
+  echo "error: expected at least one argument" >&2
+  exit 1
+fi
+
+force=false
+
+while getopts ":f" arg "$@"; do
+  case "$arg" in
+    f) force=true;;
+    *) echo "unknown option: -$OPTARG" >&2; exit 1;;
+  esac
+done
+shift $((OPTIND - 1))
+
+daynum="$(printf "%02d" "$1")"
+dirname="$daynum"
+modname="$(printf "nikc.org/aoc2023/%s" "$daynum")"
+
+if [[ -d "$dirname" ]] && ! $force; then
+  echo "error: directory $dirname already exists" >&2
+  exit 1
+fi
+
+mkdir -p "$dirname" && cd "$_" && { go mod init "$modname" || true; } && touch input.txt input_test.txt && { \
+cat <<EOT
+package main
+
+import (
+  "bufio"
+  _ "embed"
+  "errors"
+  "fmt"
+  "io"
+  "os"
+  "strings"
+)
+
+var (
+  //go:embed input.txt
+  input string
+)
+
+func main() {
+  if err := mainWithErr(os.Stdout, input); err != nil {
+    io.WriteString(os.Stderr, fmt.Sprintf("error: %s\n", err.Error()))
+  }
+}
+
+func mainWithErr(out io.Writer, input string) error {
+  first := solveFirst(input)
+  second := solveSecond(input)
+
+  fmt.Fprint(out, "=====[ Day $daynum ]=====\n")
+  fmt.Fprintf(out, "first: %d\n", first)
+  fmt.Fprintf(out, "second: %d\n", second)
+
+  return nil
+}
+
+func parseInput(i string) {
+  s := bufio.NewScanner(strings.NewReader(i))
+  for s.Scan() {
+    fmt.Println(s.Text())
+  }
+  panic(errors.New("not implemented"))
+}
+
+func solveFirst(i string) int {
+  return 0
+}
+
+func solveSecond(i string) int {
+  return 0
+}
+EOT
+} > main.go && { cat <<EOT
+package main
+
+import (
+  _ "embed"
+  "bytes"
+  "testing"
+  "github.com/stretchr/testify/assert"
+)
+
+var (
+  //go:embed input_test.txt
+  testInput string
+)
+
+func TestMainWithErr(t *testing.T) {
+  assert.NoError(t, mainWithErr(&bytes.Buffer{}, testInput))
+}
+
+func TestParseInput(t *testing.T) {
+  parseInput(testInput)
+}
+
+func TestSolveFirst(t *testing.T) {
+  sol := solveFirst(testInput)
+  assert.Equal(t, ${2:-0}, sol)
+}
+
+func TestSolveSecond(t *testing.T) {
+  sol := solveSecond(testInput)
+  assert.Equal(t, 0, sol)
+}
+EOT
+} > main_test.go && go fmt ./*.go && cd .. && go work use "./$daynum" && go work sync
+
