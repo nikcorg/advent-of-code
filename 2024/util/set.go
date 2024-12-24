@@ -35,6 +35,8 @@ func (s Set[T]) Size() int {
 	return len(s)
 }
 
-func (s Set[T]) Add(v T) {
-	s[v] = struct{}{}
+func (s Set[T]) Add(vs ...T) {
+	for _, v := range vs {
+		s[v] = struct{}{}
+	}
 }
