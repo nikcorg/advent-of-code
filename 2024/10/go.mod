@@ -1,4 +1,4 @@
-module nikc.org/aoc2024/util
+module nikc.org/aoc2023/10
 
 go 1.23.3
 

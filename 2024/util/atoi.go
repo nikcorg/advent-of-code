@@ -1,9 +1,15 @@
 package util
 
-import "strconv"
+import (
+	"strconv"
+)
 
-func MustAtoi(x string) int {
-	i, err := strconv.Atoi(x)
+type stringish interface {
+	~string | ~rune
+}
+
+func MustAtoi[X stringish](x X) int {
+	i, err := strconv.Atoi(string(x))
 	if err != nil {
 		panic(err)
 	}
