@@ -31,5 +31,5 @@ func TestSolveFirst(t *testing.T) {
 
 func TestSolveSecond(t *testing.T) {
 	sol := solveSecond(testInput)
-	assert.Equal(t, 0, sol)
+	assert.Equal(t, 2858, sol)
 }

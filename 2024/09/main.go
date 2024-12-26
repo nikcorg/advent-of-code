@@ -39,29 +39,53 @@ const (
 )
 
 type fileblock struct {
-	typ, length int
+	typ, id, length int
 }
 
 func (b *fileblock) Slice() fileblock {
-	b0 := fileblock{b.typ, 1}
+	b0 := fileblock{b.typ, b.id, 1}
 	b.length--
 	return b0
 }
 
+func (b fileblock) String() string {
+	switch b.typ {
+	case space:
+		return fmt.Sprintf(`[space len=%d]`, b.length)
+
+	default:
+		return fmt.Sprintf(`[id=%d len=%d]`, b.id, b.length)
+	}
+}
+
 type fs []fileblock
+
+func (f fs) String() string {
+	s := ""
+	for _, b := range f {
+		switch b.typ {
+		case space:
+			s += strings.Repeat(".", b.length)
+		default:
+			s += strings.Repeat(string(fmt.Sprintf("%d", b.id)[0]), b.length)
+		}
+	}
+	return s
+}
 
 func parseInput(i string) fs {
 	s := bufio.NewScanner(strings.NewReader(i))
 	fm := fs{}
-
 	id := 0
+
 	for s.Scan() {
 		for i, x := range strings.Split(s.Text(), "") {
+			bs := util.MustAtoi(x)
 			if i%2 == 0 {
-				fm = append(fm, fileblock{typ: file, length: util.MustAtoi(x)})
+				fm = append(fm, fileblock{typ: file, id: id, length: bs})
 				id++
 			} else {
-				fm = append(fm, fileblock{typ: space, length: util.MustAtoi(x)})
+				fm = append(fm, fileblock{typ: space, length: bs})
 			}
 		}
 	}
@@ -70,42 +94,98 @@ func parseInput(i string) fs {
 }
 
 func solveFirst(i string) int {
-	// dense := []int{1, 2, 3, 4, 5}
 	dense := parseInput(i)
-
-	// the dense needs to mimic the sparse version for copying over, meaning the
-	// cursor at the right side cannot move to the next space over, until it has
-	// decremented the size of the file. (maybe decrement the file size until it
-	// reaches 0?) the file id from the right cursor repeats for every empty space
-	// at the left cursor until the right cursor shifts onto the next file block.
-
-	sparse := ""
-
-	l, r := 0, len(sparse)-1
+	sparse := fs{}
+	l, r := 0, len(dense)-1
 
 	for l < r {
-		if dense[l].typ == space {
+		if dense[l].typ != space {
+			for dense[l].length > 0 {
+				sparse = append(sparse, dense[l].Slice())
+			}
+			l++
+			continue
+		}
+
+		for dense[l].length > 0 {
 			for dense[r].typ == space || dense[r].length == 0 {
 				r--
 			}
-			dense[l] = dense[r].Slice()
+			sparse = append(sparse, dense[r].Slice())
+			dense[l].length--
 		}
 
 		l++
 	}
 
+	// drain final right block
+	for dense[r].length > 0 {
+		sparse = append(sparse, dense[r].Slice())
+	}
+
 	tot := 0
 
-	for i, s := range dense {
-		if s.typ == space {
+	for i, b := range sparse {
+		if b.typ == space {
 			continue
 		}
-		tot += s.id * i
+		tot += b.id * i
 	}
 
 	return tot
 }
 
-func solveSecond(i string) int {
-	return 0
+func solveSecond(in string) int {
+	dense := parseInput(in)
+	tot := 0
+	l, r := 0, len(dense)-1
+
+	for l < r {
+		for dense[r].typ == space {
+			r--
+		}
+
+		for l < r {
+			if dense[l].typ != space || dense[l].length < dense[r].length {
+				l++
+			} else {
+				break
+			}
+		}
+
+		if l >= r {
+			l = 0
+			r--
+			continue
+		}
+
+		// empty block size matches file block size = simple swap
+		if dense[r].length == dense[l].length {
+			dense[l], dense[r] = dense[r], dense[l]
+		} else {
+			// file block is smaller than empty space = split space, splice and swap
+			dense[l].length -= dense[r].length
+			tmp := dense[r]
+			dense[r] = fileblock{typ: space, length: tmp.length}
+			dense = append(dense[0:l], append(fs{tmp}, dense[l:]...)...)
+		}
+
+		r--
+		l = 0
+	}
+
+	i := 0
+	for _, b := range dense {
+		if b.typ == space {
+			i += b.length
+			continue
+		}
+		for b.length > 0 {
+			tot += b.id * i
+			b.length--
+			i++
+		}
+	}
+
+	return tot
 }
