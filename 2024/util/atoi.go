@@ -16,3 +16,11 @@ func MustAtoi[X stringish](x X) int {
 
 	return i
 }
+func MustAtoi64[X stringish](x X) int64 {
+	i, err := strconv.ParseInt(string(x), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
+	return i
+}
