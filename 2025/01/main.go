@@ -54,9 +54,7 @@ func solveFirst(i string) int {
 	zs := 0
 
 	for _, m := range ms {
-		nextDial := dial + m
-
-		nextDial = util.Mod(nextDial, 100)
+		nextDial := util.Mod(dial+m, 100)
 
 		if nextDial == 0 {
 			zs++
